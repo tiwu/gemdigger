@@ -110,17 +110,22 @@ Mine gems back-to-back (without moving through empty tiles in between) to build 
 
 ## 🏪 Upgrade Shop
 
-Visit the **🏠 Surface Base** to open the shop. Spend your score on 5 upgrade tracks:
+Visit the **🏠 Surface Base** to open the shop. Spend your score on 5 upgrade tracks — every level of every upgrade is tuned to have a real, noticeable effect on your runs:
 
 | Upgrade | Effect | Max Level |
 |---------|--------|-----------|
-| ⚙️ Drill Power | Increases drill strength | Lv 4 |
+| ⚙️ Drill Power | Required to break tougher rock found deeper down — Ice/Magma Layer stone needs Lv 1-2, Deep Core stone needs Lv 3-4 | Lv 4 |
 | 🚀 Move Speed | Faster movement animation | Lv 3 |
-| ⛽ Fuel Efficiency | Reduces fuel cost per move | Lv 3 |
+| ⛽ Fuel Efficiency | Reduces fuel cost per move by 20% per level (up to 60% cheaper at Lv 3) | Lv 3 |
 | 🛢️ Fuel Tank | Increases max fuel capacity | Lv 3 |
-| 🛡️ Hull Plating | Increases max hull & reduces damage taken (up to 45%) | Lv 3 |
+| 🛡️ Hull Plating | Increases max hull & reduces hazard damage (up to 45%) — hazards (lava, cave-ins) hit harder the deeper you go, so this stays relevant late-game | Lv 3 |
+
+### Why Drill Power and Hull Plating actually matter
+
+Stone toughness scales with biome depth (Surface/Cavern = 3, Ice/Magma Layer = 5, Deep Core = 8), so each Drill Power level unlocks stone-digging in a progressively deeper biome instead of being purely cosmetic. Similarly, lava and cave-in damage now scale up with depth just like fuel drain does, so Hull Plating's extra capacity and damage reduction genuinely keep you alive in the Magma Layer and Deep Core rather than sitting unused.
 
 ---
+
 
 ## 🏅 Achievements
 
@@ -200,6 +205,8 @@ See [plan.md](plan.md) for the full development plan and progress log.
 - ✅ Phase 12 — Accessibility, Audio Settings & Background Music (settings overlay, procedural music, low-fuel/hull warnings, full keyboard navigation for overlays)
 - ✅ Phase 13 — Biome Distinction & Outposts (per-biome stone/dirt colors, gem rarity weighting, biome-specific ambient music, depth-scaled fuel drain, deployable Outposts, 3x Unobtainium, tutorial modal, extracted/tested pure game-logic module)
 - ✅ Phase 14 — UX Polish & Rebalance (retro arcade boot screen, mobile/portrait HUD fixes, reusable Outposts with cooldown, rebalanced hull-vs-fuel hazard frequency, shop before→after value display, persistent achievement system with rewards/notifications, improved shop clarity)
+- ✅ Phase 16 — Shop / Upgrade Economy Rebalance (biome-scaled stone toughness so all Drill Power levels matter, percentage-based Fuel Efficiency with 3 distinct levels, depth-scaled lava/cave-in hazard damage so Hull Plating stays relevant late-game)
+
 
 
 

@@ -222,6 +222,12 @@ canvas { background-color: #0a0a0a; box-shadow: 0 0 30px rgba(0,0,0,0.8); image-
     <div class="final-score">Final Score: <span id="final-score">0</span></div>
     <div id="high-score-display" style="font-size:15px;color:#95a5a6;margin-bottom:8px;"></div>
     <div class="gems-found" id="gems-found"></div>
+    <div style="display:flex; gap:8px; align-items:center; margin-bottom:10px;">
+        <input type="text" id="lb-name-input" maxlength="16" placeholder="Your name"
+            style="padding:8px 10px; border-radius:6px; border:1px solid #4a6fa5; background:#0d1620; color:#fff; font-size:14px; width:160px;">
+        <button class="big-btn" id="lb-save-btn" style="margin:0; padding:8px 16px; font-size:13px;">💾 Save Score</button>
+    </div>
+    <div id="lb-save-confirm" style="font-size:12px; color:#2ecc71; margin-bottom:6px; min-height:14px;"></div>
     <div>
         <button class="big-btn" id="restart-btn">⛏ Dig Again</button>
         <button class="big-btn red" id="overlay-lb-btn">🏆 Leaderboard</button>
@@ -366,12 +372,13 @@ const UNOBTAINIUM_COUNT = 3;
 
 
 const UPGRADES = [
-    { id:'drillPower', name:'⚙️ Drill Power', desc:'Increases drill strength', costs:[0,100,250,500,1000], maxLevel:4 },
+    { id:'drillPower', name:'⚙️ Drill Power', desc:'Breaks tougher rock found deeper down (Ice/Magma/Deep Core)', costs:[0,150,300,600,1000], maxLevel:4 },
     { id:'moveSpeed', name:'🚀 Move Speed', desc:'Drill moves faster', costs:[0,80,200,400], maxLevel:3 },
-    { id:'fuelEfficiency', name:'⛽ Fuel Efficiency', desc:'Reduces fuel cost per move', costs:[0,120,300,600], maxLevel:3 },
+    { id:'fuelEfficiency', name:'⛽ Fuel Efficiency', desc:'Reduces fuel cost per move by 20% per level', costs:[0,150,300,500], maxLevel:3 },
     { id:'fuelCapacity', name:'🛢️ Fuel Tank', desc:'Increases max fuel capacity', costs:[0,150,350,700], maxLevel:3 },
-    { id:'hullPlating', name:'🛡️ Hull Plating', desc:'Increases max hull & reduces damage', costs:[0,150,350,700], maxLevel:3 }
+    { id:'hullPlating', name:'🛡️ Hull Plating', desc:'Increases max hull & reduces hazard damage (hazards get tougher with depth)', costs:[0,150,350,700], maxLevel:3 }
 ];
+
 
 // ── Outposts ─────────────────────────────────────────────────────────────────
 const MAX_OUTPOSTS = GameLogic.MAX_OUTPOSTS;
@@ -487,15 +494,9 @@ function applyDpadVisibility() {
 
 function getUpgradeValue(id) {
     const lvl = upgradeLevels[id];
-    switch(id) {
-        case 'drillPower': return 5 + lvl*2;
-        case 'moveSpeed': return 6 + lvl*2;
-        case 'fuelEfficiency': return Math.max(1, FUEL_PER_MOVE - lvl);
-        case 'fuelCapacity': return MAX_FUEL + lvl*50;
-        case 'hullPlating': return MAX_HULL + lvl*40;
-        default: return 0;
-    }
+    return GameLogic.getUpgradeValue(id, lvl);
 }
+
 function getHullDamageReduction() { return upgradeLevels.hullPlating * 0.15; } // up to 45% reduction
 
 function init() {
@@ -582,7 +583,7 @@ function sfxLava() { beep(80,0.3,'sawtooth',0.15); }
 function sfxCavein() { beep(60,0.4,'sawtooth',0.12); }
 function sfxLegendary() { [523,659,784,1046].forEach((f,i)=>setTimeout(()=>beep(f,0.3,'sine',0.15), i*120)); }
 function sfxShop() { beep(600,0.08,'square',0.08); }
-function sfxLowWarning() { beep(220,0.12,'sine',0.08); }
+function sfxLowWarning(pitch) { beep(pitch||220,0.12,'square',0.09); }
 function sfxHullWarning() { beep(150,0.15,'square',0.1); }
 
 document.getElementById('sound-toggle').addEventListener('click', function() {
@@ -677,8 +678,10 @@ function tryMove(dx, dy) {
     if (targetTile !== TILES.EMPTY) {
         if (targetTile === TILES.LAVA) {
             const dmgReduction = getHullDamageReduction();
+            const hazardMult = GameLogic.getDepthHazardMultiplier(depthFracNow);
+            const lavaHullDmg = Math.round(LAVA_HULL_DAMAGE * hazardMult);
             fuel = Math.max(0, fuel - LAVA_FUEL_DAMAGE);
-            hull = Math.max(0, hull - LAVA_HULL_DAMAGE*(1-dmgReduction));
+            hull = Math.max(0, hull - lavaHullDmg*(1-dmgReduction));
             showFloatingText(`-${LAVA_FUEL_DAMAGE} Fuel / -Hull!`, newGridX, newGridY, '#e74c3c');
             spawnParticles(newGridX, newGridY, '#ff6600', 10);
             sfxLava();
@@ -688,8 +691,9 @@ function tryMove(dx, dy) {
             return;
         }
 
-        const toughness = targetTile === TILES.STONE ? 3 : 1;
+        const toughness = targetTile === TILES.STONE ? GameLogic.getStoneToughness(getBiome(depthFracNow)) : 1;
         if (player.drillPower < toughness) return;
+
 
         if (isGem) {
             registerGemHit();
@@ -727,9 +731,9 @@ function tryMove(dx, dy) {
         }
 
         if (targetTile === TILES.BASE) {
+            fuel = Math.max(0, fuel - fuelCost);
             fuel = maxFuel; hull = maxHull;
             showFloatingText('Refuelled!', newGridX, newGridY, '#2ecc71');
-            fuel = Math.max(0, fuel - fuelCost);
             player.moving = true;
             player.targetX = newGridX*TILE_SIZE; player.targetY = newGridY*TILE_SIZE;
             player.gridX = newGridX; player.gridY = newGridY;
@@ -738,6 +742,7 @@ function tryMove(dx, dy) {
         }
 
         if (targetTile === TILES.OUTPOST) {
+            fuel = Math.max(0, fuel - fuelCost);
             const key = newGridX+','+newGridY;
             const lastUsed = outpostLastUsed[key];
             if (GameLogic.canUseOutpost(lastUsed, Date.now())) {
@@ -749,6 +754,11 @@ function tryMove(dx, dy) {
                 const remainingS = Math.ceil(GameLogic.getOutpostCooldownRemaining(lastUsed, Date.now())/1000);
                 showFloatingText(`Cooling down (${remainingS}s)`, newGridX, newGridY, '#95a5a6');
             }
+            player.moving = true;
+            player.targetX = newGridX*TILE_SIZE; player.targetY = newGridY*TILE_SIZE;
+            player.gridX = newGridX; player.gridY = newGridY;
+            if (fuel<=0) setTimeout(()=>triggerGameOver('fuel'),400);
+            return;
         }
 
 
@@ -794,7 +804,10 @@ function triggerCaveIn(cx, cy) {
         for (const t of toCollapse) {
             if (t.x===player.gridX && t.y===player.gridY) {
                 const dmgReduction = getHullDamageReduction();
-                hull = Math.max(0, hull - CAVEIN_HULL_DAMAGE*(1-dmgReduction));
+                const depthFracHere = Math.max(0, (t.y-2)/(GRID_HEIGHT-3));
+                const hazardMult = GameLogic.getDepthHazardMultiplier(depthFracHere);
+                const caveinDmg = Math.round(CAVEIN_HULL_DAMAGE * hazardMult);
+                hull = Math.max(0, hull - caveinDmg*(1-dmgReduction));
                 showFloatingText('-Hull!', t.x, t.y, '#e74c3c');
                 if (hull<=0) triggerGameOver('hull');
                 continue;
@@ -803,6 +816,7 @@ function triggerCaveIn(cx, cy) {
         }
     }, 500);
 }
+
 
 // ── Shop ─────────────────────────────────────────────────────────────────────
 function openShop() {
@@ -861,6 +875,7 @@ document.getElementById('shop-close-btn').addEventListener('click', closeShop);
 
 // ── Leaderboard ──────────────────────────────────────────────────────────────
 const LB_KEY = 'gemdigger_leaderboard';
+const LB_NAME_KEY = 'gemdigger_playername';
 function getLeaderboard() { try { return JSON.parse(localStorage.getItem(LB_KEY)||'[]'); } catch(e){ return []; } }
 function saveLeaderboardEntry(entry) {
     const lb = getLeaderboard();
@@ -868,15 +883,39 @@ function saveLeaderboardEntry(entry) {
     lb.sort((a,b)=>b.score-a.score);
     localStorage.setItem(LB_KEY, JSON.stringify(lb.slice(0,10)));
 }
+function updateLeaderboardEntryName(id, name) {
+    const lb = getLeaderboard();
+    const entry = lb.find(e=>e.id === id);
+    if (entry) { entry.name = name; localStorage.setItem(LB_KEY, JSON.stringify(lb)); }
+}
+function escapeHtml(str) { const d = document.createElement('div'); d.textContent = str; return d.innerHTML; }
 function renderLeaderboard() {
     const lb = getLeaderboard();
     const listEl = document.getElementById('leaderboard-list');
     if (lb.length === 0) { listEl.innerHTML = '<div style="text-align:center;color:#7f8c8d;">No runs yet. Get digging!</div>'; return; }
-    listEl.innerHTML = lb.map((e,i)=>`<div class="lb-row ${i===0?'top1':''}"><span>#${i+1} ${i===0?'👑':''}</span><span>${e.score} pts</span><span>${e.depth}m</span><span>${e.gems} gems</span></div>`).join('');
+    listEl.innerHTML = lb.map((e,i)=>`<div class="lb-row ${i===0?'top1':''}"><span>#${i+1} ${i===0?'👑':''} ${e.name?escapeHtml(e.name):'Anonymous'}</span><span>${e.score} pts</span><span>${e.depth}m</span><span>${e.gems} gems</span></div>`).join('');
 }
 document.getElementById('lb-toggle').addEventListener('click', ()=>{ renderLeaderboard(); lbOverlayEl.classList.add('visible'); });
 document.getElementById('overlay-lb-btn').addEventListener('click', ()=>{ renderLeaderboard(); lbOverlayEl.classList.add('visible'); });
 document.getElementById('lb-close-btn').addEventListener('click', ()=>{ lbOverlayEl.classList.remove('visible'); });
+
+// Name entry on the Game Over overlay
+let currentRunLbId = null;
+const lbNameInput = document.getElementById('lb-name-input');
+const lbSaveBtn = document.getElementById('lb-save-btn');
+const lbSaveConfirm = document.getElementById('lb-save-confirm');
+if (lbNameInput) lbNameInput.value = localStorage.getItem(LB_NAME_KEY) || '';
+if (lbSaveBtn) {
+    lbSaveBtn.addEventListener('click', ()=>{
+        const name = (lbNameInput.value || '').trim().slice(0,16) || 'Anonymous';
+        localStorage.setItem(LB_NAME_KEY, name);
+        if (currentRunLbId) {
+            updateLeaderboardEntryName(currentRunLbId, name);
+            lbSaveConfirm.textContent = '✅ Saved!';
+            setTimeout(()=>{ lbSaveConfirm.textContent = ''; }, 2000);
+        }
+    });
+}
 
 // ── Settings Overlay Controls ────────────────────────────────────────────────
 function openSettings() { settingsOpen = true; applySettingsToUI(); settingsOverlayEl.classList.add('visible'); }
@@ -908,7 +947,12 @@ function triggerGameOver(reason) {
 
     const totalGems = Object.values(inventory).reduce((a,b)=>a+b,0);
     const depthMeters = Math.max(0, player.gridY-2)*2;
-    saveLeaderboardEntry({ score, depth: depthMeters, gems: totalGems, date: new Date().toISOString() });
+    const lbId = Date.now() + '-' + Math.floor(Math.random()*100000);
+    const savedName = localStorage.getItem(LB_NAME_KEY) || '';
+    saveLeaderboardEntry({ id: lbId, name: savedName || 'Anonymous', score, depth: depthMeters, gems: totalGems, date: new Date().toISOString() });
+    currentRunLbId = lbId;
+    if (lbNameInput) lbNameInput.value = savedName;
+    if (lbSaveConfirm) lbSaveConfirm.textContent = '';
     playerStats.runsCompleted++;
     saveStats();
     checkAchievements();
@@ -1003,10 +1047,17 @@ function update() {
 
     if (comboTimer > 0) { comboTimer--; if (comboTimer===0) resetCombo(); }
 
-    // Low-fuel warning sfx
+    // Low-fuel warning sfx - urgency scales as fuel approaches empty:
+    // beep interval shrinks and pitch rises the lower fuel gets.
     if (fuel > 0 && fuel/maxFuel <= 0.2) {
         lowFuelTimer--;
-        if (lowFuelTimer <= 0) { sfxLowWarning(); lowFuelTimer = 90; }
+        if (lowFuelTimer <= 0) {
+            const fuelFrac = Math.max(0, fuel/maxFuel) / 0.2; // 1 at 20%, 0 at empty
+            const interval = Math.round(20 + fuelFrac*70); // 90 frames -> 20 frames
+            const pitch = 220 + (1-fuelFrac)*220; // 220Hz -> 440Hz
+            sfxLowWarning(pitch);
+            lowFuelTimer = interval;
+        }
     } else { lowFuelTimer = 0; }
 
     // Hull damage threshold sfx + screen flash (crossing 50%/25%)
@@ -1252,26 +1303,63 @@ Object.entries(dpadBtnMap).forEach(([id,dir])=>{
     btn.addEventListener('mouseleave', stopMove);
 });
 
-// ── Biome-specific Music Switching ──────────────────────────────────────────
+// ── Biome-specific Chiptune Music (retro arcade vibe) ───────────────────────
+// Each biome has a pulse-wave lead melody riff plus a square/triangle bass line,
+// evoking classic 80s/90s 8-bit arcade & demoscene soundtracks.
 const BIOME_MUSIC = {
-    'Surface':    { notes:[130.81, 164.81, 196.00, 164.81], type:'sine', stepMs:1000 },
-    'Cavern':     { notes:[110.00, 130.81, 146.83, 130.81], type:'triangle', stepMs:1100 },
-    'Ice Layer':  { notes:[174.61, 220.00, 261.63, 220.00], type:'sine', stepMs:1300 },
-    'Magma Layer':{ notes:[98.00, 116.54, 87.31, 116.54], type:'sawtooth', stepMs:850 },
-    'Deep Core':  { notes:[65.41, 98.00, 73.42, 55.00], type:'sine', stepMs:1500 }
+    'Surface':    {
+        lead:[523.25,659.25,783.99,659.25, 523.25,659.25,987.77,783.99],
+        bass:[130.81,130.81,164.81,164.81],
+        leadType:'square', bassType:'triangle', stepMs:180
+    },
+    'Cavern':     {
+        lead:[440.00,523.25,440.00,349.23, 440.00,523.25,659.25,523.25],
+        bass:[110.00,110.00,146.83,130.81],
+        leadType:'square', bassType:'triangle', stepMs:200
+    },
+    'Ice Layer':  {
+        lead:[698.46,880.00,1046.50,880.00, 698.46,880.00,1318.51,1046.50],
+        bass:[174.61,174.61,220.00,196.00],
+        leadType:'square', bassType:'sine', stepMs:190
+    },
+    'Magma Layer':{
+        lead:[392.00,466.16,392.00,311.13, 392.00,466.16,523.25,466.16],
+        bass:[98.00,98.00,116.54,87.31],
+        leadType:'sawtooth', bassType:'square', stepMs:150
+    },
+    'Deep Core':  {
+        lead:[261.63,329.63,392.00,329.63, 246.94,329.63,392.00,293.66],
+        bass:[65.41,65.41,98.00,73.42],
+        leadType:'square', bassType:'sine', stepMs:220
+    }
 };
 let currentMusicBiomeName = null;
 function playMusicStep(biomeConf, stepRef) {
     if (!settings.music) { musicStarted = false; return; }
     if (stepRef.biomeName !== currentMusicBiomeName) return; // biome changed, stop this loop
     const ctxA2 = getAudioCtx();
-    const osc = ctxA2.createOscillator(); const gain = ctxA2.createGain();
-    osc.type = biomeConf.type; osc.frequency.value = biomeConf.notes[stepRef.step % biomeConf.notes.length];
-    gain.gain.setValueAtTime(0.0001, ctxA2.currentTime);
-    gain.gain.linearRampToValueAtTime(0.12*settings.musicVol, ctxA2.currentTime+0.1);
-    gain.gain.linearRampToValueAtTime(0.0001, ctxA2.currentTime + biomeConf.stepMs/1000*0.9);
-    osc.connect(gain); gain.connect(ctxA2.destination);
-    osc.start(); osc.stop(ctxA2.currentTime + biomeConf.stepMs/1000);
+    const stepDur = biomeConf.stepMs/1000;
+
+    // Lead pulse-wave melody voice (plays every step)
+    const leadOsc = ctxA2.createOscillator(); const leadGain = ctxA2.createGain();
+    leadOsc.type = biomeConf.leadType; leadOsc.frequency.value = biomeConf.lead[stepRef.step % biomeConf.lead.length];
+    leadGain.gain.setValueAtTime(0.0001, ctxA2.currentTime);
+    leadGain.gain.linearRampToValueAtTime(0.09*settings.musicVol, ctxA2.currentTime+0.02);
+    leadGain.gain.linearRampToValueAtTime(0.0001, ctxA2.currentTime + stepDur*0.85);
+    leadOsc.connect(leadGain); leadGain.connect(ctxA2.destination);
+    leadOsc.start(); leadOsc.stop(ctxA2.currentTime + stepDur);
+
+    // Bass voice (plays every other step, an octave-ish lower, for that arcade groove)
+    if (stepRef.step % 2 === 0) {
+        const bassOsc = ctxA2.createOscillator(); const bassGain = ctxA2.createGain();
+        bassOsc.type = biomeConf.bassType; bassOsc.frequency.value = biomeConf.bass[(stepRef.step/2|0) % biomeConf.bass.length];
+        bassGain.gain.setValueAtTime(0.0001, ctxA2.currentTime);
+        bassGain.gain.linearRampToValueAtTime(0.1*settings.musicVol, ctxA2.currentTime+0.02);
+        bassGain.gain.linearRampToValueAtTime(0.0001, ctxA2.currentTime + stepDur*2*0.85);
+        bassOsc.connect(bassGain); bassGain.connect(ctxA2.destination);
+        bassOsc.start(); bassOsc.stop(ctxA2.currentTime + stepDur*2);
+    }
+
     stepRef.step++;
     setTimeout(()=>playMusicStep(biomeConf, stepRef), biomeConf.stepMs);
 }
@@ -1305,17 +1393,52 @@ if (!localStorage.getItem(TUTORIAL_KEY)) openTutorial();
 // ── Retro Boot Screen ────────────────────────────────────────────────────────
 const bootScreenEl = document.getElementById('boot-screen');
 const bootLoadbarFill = document.getElementById('boot-loadbar-fill');
+let bootJinglePlayed = false;
+function playBootJingle() {
+    if (bootJinglePlayed || !settings.sfx) return;
+    bootJinglePlayed = true;
+    try {
+        const ctxA = getAudioCtx();
+        // Classic 8-bit demoscene-style rising arpeggio fanfare
+        const seq = [
+            { f:261.63, d:0.09, t:'square' }, { f:329.63, d:0.09, t:'square' },
+            { f:392.00, d:0.09, t:'square' }, { f:523.25, d:0.09, t:'square' },
+            { f:659.25, d:0.09, t:'square' }, { f:783.99, d:0.16, t:'square' },
+            { f:659.25, d:0.09, t:'triangle' }, { f:1046.50, d:0.30, t:'square' }
+        ];
+        let t = 0;
+        for (const note of seq) {
+            const startAt = t;
+            setTimeout(()=>{
+                const ctxB = getAudioCtx();
+                const osc = ctxB.createOscillator(); const gain = ctxB.createGain();
+                osc.type = note.t; osc.frequency.value = note.f;
+                gain.gain.setValueAtTime(0.0001, ctxB.currentTime);
+                gain.gain.linearRampToValueAtTime(0.18*settings.sfxVol, ctxB.currentTime+0.015);
+                gain.gain.exponentialRampToValueAtTime(0.001, ctxB.currentTime+note.d);
+                osc.connect(gain); gain.connect(ctxB.destination);
+                osc.start(); osc.stop(ctxB.currentTime+note.d+0.02);
+            }, startAt*1000);
+            t += note.d*0.85;
+        }
+    } catch(e) {}
+}
 function dismissBootScreen() {
     bootScreenEl.style.display = 'none';
     window.removeEventListener('keydown', dismissBootScreen);
     window.removeEventListener('mousedown', dismissBootScreen);
     window.removeEventListener('touchstart', dismissBootScreen);
 }
+function bootScreenGestureStart() { playBootJingle(); }
 setTimeout(()=>{ bootLoadbarFill.style.width = '100%'; }, 50);
+setTimeout(playBootJingle, 60);
 setTimeout(dismissBootScreen, 3500);
 window.addEventListener('keydown', dismissBootScreen);
 window.addEventListener('mousedown', dismissBootScreen);
 window.addEventListener('touchstart', dismissBootScreen);
+window.addEventListener('keydown', bootScreenGestureStart);
+window.addEventListener('mousedown', bootScreenGestureStart);
+window.addEventListener('touchstart', bootScreenGestureStart);
 
 loadStats();
 loadSettings();

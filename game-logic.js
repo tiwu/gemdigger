@@ -26,27 +26,32 @@
         {
             name:'Surface', from:0.00, to:0.08, bg:'#1a252f', tint:null,
             stoneColor:'#6b7280', stoneBorder:'#4b5563', dirtColor:'#8b4513', dirtBorder:'#6b3410',
-            gemWeights: { GOLD:1, RUBY:0.5, EMERALD:0.5, DIAMOND:0.5, SAPPHIRE:0.3 }
+            gemWeights: { GOLD:1, RUBY:0.5, EMERALD:0.5, DIAMOND:0.5, SAPPHIRE:0.3 },
+            stoneToughness: 3
         },
         {
             name:'Cavern', from:0.08, to:0.35, bg:'#241a14', tint:null,
             stoneColor:'#7a6a58', stoneBorder:'#584c3d', dirtColor:'#8b4513', dirtBorder:'#6b3410',
-            gemWeights: { GOLD:1.4, RUBY:1.2, EMERALD:0.8, DIAMOND:0.7, SAPPHIRE:0.5 }
+            gemWeights: { GOLD:1.4, RUBY:1.2, EMERALD:0.8, DIAMOND:0.7, SAPPHIRE:0.5 },
+            stoneToughness: 3
         },
         {
             name:'Ice Layer', from:0.35, to:0.55, bg:'#16232e', tint:'rgba(100,180,255,0.06)',
             stoneColor:'#9fc4d8', stoneBorder:'#6f97ab', dirtColor:'#5f7a8a', dirtBorder:'#425460',
-            gemWeights: { GOLD:0.7, RUBY:0.6, EMERALD:0.9, DIAMOND:1.1, SAPPHIRE:1.8 }
+            gemWeights: { GOLD:0.7, RUBY:0.6, EMERALD:0.9, DIAMOND:1.1, SAPPHIRE:1.8 },
+            stoneToughness: 5
         },
         {
             name:'Magma Layer', from:0.55, to:0.78, bg:'#2a1210', tint:'rgba(255,80,20,0.08)',
             stoneColor:'#5a2a20', stoneBorder:'#3d1a14', dirtColor:'#6b2f18', dirtBorder:'#471f10',
-            gemWeights: { GOLD:0.8, RUBY:1.9, EMERALD:0.6, DIAMOND:0.9, SAPPHIRE:0.6 }
+            gemWeights: { GOLD:0.8, RUBY:1.9, EMERALD:0.6, DIAMOND:0.9, SAPPHIRE:0.6 },
+            stoneToughness: 5
         },
         {
             name:'Deep Core', from:0.78, to:1.01, bg:'#050505', tint:'rgba(150,0,255,0.05)',
             stoneColor:'#2b2233', stoneBorder:'#1a1420', dirtColor:'#241a2c', dirtBorder:'#160f1a',
-            gemWeights: { GOLD:0.6, RUBY:0.8, EMERALD:1.1, DIAMOND:1.8, SAPPHIRE:1.3 }
+            gemWeights: { GOLD:0.6, RUBY:0.8, EMERALD:1.1, DIAMOND:1.8, SAPPHIRE:1.3 },
+            stoneToughness: 8
         }
     ];
 
@@ -60,11 +65,19 @@
     const MAX_FUEL = 200;
     const MAX_HULL = 100;
 
+    // drillPower: crosses stone-toughness thresholds (3 / 5 / 8) as it levels up,
+    // so each level actually unlocks digging in a deeper biome's stone instead of
+    // being purely cosmetic.
+    const DRILL_POWER_LEVELS = [3, 5, 6, 8, 10];
+    // fuelEfficiency: percentage-based cost multiplier so every level (0-3) has a
+    // distinct, meaningful effect instead of flooring out after level 1.
+    const FUEL_EFFICIENCY_MULTIPLIERS = [1, 0.8, 0.6, 0.4];
+
     function getUpgradeValue(id, level) {
         switch(id) {
-            case 'drillPower': return 5 + level*2;
+            case 'drillPower': return DRILL_POWER_LEVELS[Math.min(level, DRILL_POWER_LEVELS.length-1)];
             case 'moveSpeed': return 6 + level*2;
-            case 'fuelEfficiency': return Math.max(1, FUEL_PER_MOVE - level);
+            case 'fuelEfficiency': return FUEL_PER_MOVE * FUEL_EFFICIENCY_MULTIPLIERS[Math.min(level, FUEL_EFFICIENCY_MULTIPLIERS.length-1)];
             case 'fuelCapacity': return MAX_FUEL + level*50;
             case 'hullPlating': return MAX_HULL + level*40;
             default: return 0;
@@ -80,6 +93,20 @@
     function getDepthFuelMultiplier(depthFrac) {
         return 1 + Math.max(0, depthFrac) * 1.6;
     }
+
+    // Hazard damage (lava, cave-ins) also scales with depth, mirroring fuel
+    // drain, so Hull Plating capacity/reduction remains relevant late-game
+    // instead of being trivially absorbed by the base 100 HP pool.
+    function getDepthHazardMultiplier(depthFrac) {
+        return 1 + Math.max(0, depthFrac) * 1.2;
+    }
+
+    // Returns the toughness required to dig STONE tiles in a given biome
+    // (falls back to 3, the historical/base value, if unspecified).
+    function getStoneToughness(biome) {
+        return (biome && biome.stoneToughness) || 3;
+    }
+
 
 
 
@@ -199,13 +226,15 @@
         getUpgradeValue, getHullDamageReduction,
         computeComboMultiplier, computeReward,
         pickTileForRoll,
-        getDepthFuelMultiplier,
+        getDepthFuelMultiplier, getDepthHazardMultiplier, getStoneToughness,
         OUTPOST_KIT_COSTS, MAX_OUTPOSTS, OUTPOST_COOLDOWN_MS,
         canBuyOutpost, getOutpostKitCost, canPlaceOutpost,
         canUseOutpost, getOutpostCooldownRemaining,
         ACHIEVEMENTS, evaluateAchievements,
-        FUEL_PER_MOVE, MAX_FUEL, MAX_HULL
+        FUEL_PER_MOVE, MAX_FUEL, MAX_HULL,
+        DRILL_POWER_LEVELS, FUEL_EFFICIENCY_MULTIPLIERS
 
     };
 });
+
 
