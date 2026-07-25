@@ -160,6 +160,22 @@ Single-file HTML/CSS/JS solution for easy deployment and immediate usability.
 - **Particles**: Simple array-based system with gravity (`vy += 0.15`) and alpha fade-out tied to `life`.
 - **Leaderboard**: Stored as a sorted JSON array in `localStorage`, capped at the top 10 entries by score.
 
+### Phase 12 — Accessibility, Audio & Settings (In Progress)
+- [ ] Settings overlay (⚙️ button) with:
+  - [ ] D-pad visibility toggle
+  - [ ] SFX on/off + volume slider
+  - [ ] Music on/off + volume slider
+  - [ ] Persisted to `localStorage` (`gemdigger_settings`), music defaults ON at modest volume
+- [ ] Wire D-pad visibility + SFX volume into existing dpad/audio code
+- [ ] Procedural background music loop (Web Audio API), lazily started on first user gesture
+- [ ] Low-fuel warning sfx (periodic beep below threshold) + pulsing fuel bar
+- [ ] Hull damage threshold sfx (crossing 50%/25%) + pulsing hull bar + brief red screen flash on hit
+- [ ] Full keyboard accessibility for overlays (no mouse required):
+  - [ ] Game Over overlay: `Enter`/`Space` = restart, `Esc`/`L` = leaderboard
+  - [ ] Leaderboard overlay: `Enter`/`Esc` = close
+  - [ ] Shop overlay: arrow keys to highlight an upgrade, `Enter`/`Space` to confirm purchase, `Esc` to close
+- [ ] README.md updated with new settings/audio/keyboard features
+
 ## Potential Future Features
 
 - [ ] Drill skins / cosmetic unlocks
@@ -167,3 +183,4 @@ Single-file HTML/CSS/JS solution for easy deployment and immediate usability.
 - [ ] Daily seed / shareable world codes
 - [ ] Achievements system
 - [ ] Global online leaderboard (requires backend)
+
