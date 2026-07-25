@@ -62,14 +62,16 @@
             EMPTY: 0,
             DIRT: 1,      // Easy to dig
             STONE: 2,     // Harder to dig
-            GEM: 3        // Reward!
+            GOLD: 3,      // Good reward!
+            DIAMOND: 4     // Rare prize!
         };
 
         const COLORS = {
             [TILES.EMPTY]: '#000',
             [TILES.DIRT]: '#8b4513',
             [TILES.STONE]: '#808080',
-            [TILES.GEM]: '#ffd700'
+            [TILES.GOLD]: '#ffd700',
+            [TILES.DIAMOND]: '#00ffff'
         };
 
         // Game State
@@ -79,7 +81,9 @@
             y: 25 * TILE_SIZE,
             targetX: 25 * TILE_SIZE,
             targetY: 25 * TILE_SIZE,
-            drillPower: 5
+            drillPower: 5,
+            xp: 0,
+            level: 1
         };
         let score = 0;
         let inventory = [];
