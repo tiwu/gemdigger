@@ -30,3 +30,18 @@ I will create a single-file HTML/CSS/JS solution to ensure easy deployment and i
 2. **Collision Test**: Verify that the drill cannot pass through impassable walls without digging.
 3. **Scoring**: Confirm gems are added to inventory when hit/mined.
 4. **Performance**: Verify 60fps on standard hardware.
+
+# Progress Log & Design Notes
+
+## Development Milestones
+- [x] Core Game Loop & Rendering (Canvas API, requestAnimationFrame)
+- [x] Grid System & Tile Types (Dirt, Stone, Gem)
+- [x] Procedural Generation (Basic random distribution)
+- [x] Basic Drill Mechanics (Power vs. Difficulty)
+- [x] Movement Smoothing (Decoupled axes and snap-to-grid logic)
+- [x] Camera Implementation (Dynamic centering on player)
+
+## Technical Notes & Adaptations
+- **Movement**: Implemented a "snap" mechanism during movement to ensure the drill aligns perfectly with tile boundaries, improving collision detection for gems.
+- **Rendering**: Implemented a camera offset in the `draw()` loop to handle potential large map sizes and prevent out-of-bounds navigation.
+- **Game Loop**: Standardized on a single update/draw pass within `requestAnimationFrame` for consistent performance.
