@@ -26,11 +26,12 @@ body {
 #hull-bar { background: linear-gradient(90deg,#7f1d1d,#c0392b); }
 #inventory { margin-top: 8px; font-size: 12px; color: #bdc3c7; max-width: 210px; word-wrap: break-word; }
 canvas { background-color: #0a0a0a; box-shadow: 0 0 30px rgba(0,0,0,0.8); image-rendering: pixelated; }
-#overlay, #shop-overlay, #leaderboard-overlay {
+#overlay, #shop-overlay, #leaderboard-overlay, #settings-overlay {
     display: none; position: absolute; top:0; left:0; right:0; bottom:0; background: rgba(0,0,0,0.85);
     flex-direction: column; align-items: center; justify-content: center; z-index: 20;
 }
-#overlay.visible, #shop-overlay.visible, #leaderboard-overlay.visible { display: flex; }
+#overlay.visible, #shop-overlay.visible, #leaderboard-overlay.visible, #settings-overlay.visible { display: flex; }
+
 #overlay h2 { font-size: 44px; color: #e74c3c; text-shadow: 0 0 20px #e74c3c; margin: 0 0 10px 0; }
 #overlay .final-score { font-size: 24px; color: #f0c040; margin-bottom: 10px; }
 #overlay .gems-found { font-size: 15px; color: #bdc3c7; margin-bottom: 20px; text-align:center; max-width:500px; }
@@ -73,7 +74,26 @@ canvas { background-color: #0a0a0a; box-shadow: 0 0 30px rgba(0,0,0,0.8); image-
     position: absolute; top: 10px; right: 60px; background: rgba(0,0,0,0.7); border: 1px solid #4a6fa5;
     color: white; font-size: 16px; padding: 8px 12px; border-radius: 8px; cursor: pointer; z-index: 10;
 }
+#settings-toggle {
+    position: absolute; top: 10px; right: 110px; background: rgba(0,0,0,0.7); border: 1px solid #4a6fa5;
+    color: white; font-size: 16px; padding: 8px 12px; border-radius: 8px; cursor: pointer; z-index: 10;
+}
+#settings-overlay h2 { font-size: 28px; color: #f0c040; margin-bottom: 14px; }
+.settings-grid { width: 90%; max-width: 420px; margin-bottom: 16px; }
+.settings-row { display: flex; align-items: center; justify-content: space-between; padding: 10px 14px;
+    background: rgba(255,255,255,0.05); border-radius: 6px; margin-bottom: 8px; font-size: 14px; }
+.settings-row input[type="range"] { width: 130px; }
+.settings-row label { display:flex; align-items:center; gap:8px; }
+@keyframes pulseWarn { 0%,100% { filter:brightness(1); } 50% { filter:brightness(1.6); } }
+.bar-fill.pulse { animation: pulseWarn 0.6s infinite; }
+#screen-flash {
+    position: absolute; top:0; left:0; right:0; bottom:0; background: rgba(255,0,0,0.35);
+    pointer-events: none; z-index: 25; opacity: 0; transition: opacity 0.15s;
+}
+#screen-flash.active { opacity: 1; }
+.shop-item.highlighted, .settings-row.highlighted { outline: 2px solid #f0c040; }
 </style>
+
 </head>
 <body>
 <div id="ui">
@@ -91,8 +111,11 @@ canvas { background-color: #0a0a0a; box-shadow: 0 0 30px rgba(0,0,0,0.8); image-
 
 <button id="sound-toggle">🔊</button>
 <button id="lb-toggle">🏆</button>
+<button id="settings-toggle">⚙️</button>
 
 <canvas id="gameCanvas"></canvas>
+<div id="screen-flash"></div>
+
 
 <div id="overlay">
     <h2 id="overlay-title">⛽ Out of Fuel!</h2>
@@ -127,6 +150,25 @@ canvas { background-color: #0a0a0a; box-shadow: 0 0 30px rgba(0,0,0,0.8); image-
     <button class="big-btn red" id="lb-close-btn">Close</button>
 </div>
 
+<div id="settings-overlay">
+    <h2>⚙️ Settings</h2>
+    <div class="settings-grid" id="settings-grid">
+        <div class="settings-row">
+            <label><input type="checkbox" id="setting-dpad"> Show D-Pad</label>
+        </div>
+        <div class="settings-row">
+            <label><input type="checkbox" id="setting-sfx"> Sound Effects</label>
+            <input type="range" id="setting-sfx-vol" min="0" max="1" step="0.05">
+        </div>
+        <div class="settings-row">
+            <label><input type="checkbox" id="setting-music"> Music</label>
+            <input type="range" id="setting-music-vol" min="0" max="1" step="0.05">
+        </div>
+    </div>
+    <button class="big-btn red" id="settings-close-btn">Close</button>
+</div>
+
+
 <script>
 const canvas = document.getElementById('gameCanvas');
 const ctx = canvas.getContext('2d');
@@ -144,6 +186,10 @@ const gemsFoundEl = document.getElementById('gems-found');
 const restartBtn = document.getElementById('restart-btn');
 const shopOverlayEl = document.getElementById('shop-overlay');
 const lbOverlayEl = document.getElementById('leaderboard-overlay');
+const settingsOverlayEl = document.getElementById('settings-overlay');
+const dpadEl = document.getElementById('dpad');
+const screenFlashEl = document.getElementById('screen-flash');
+
 
 // ── Configuration ──────────────────────────────────────────────────────────
 const TILE_SIZE = 40;
@@ -212,13 +258,40 @@ const UPGRADES = [
 // ── Game State ───────────────────────────────────────────────────────────────
 let grid = [], player = {}, score = 0, fuel = MAX_FUEL, maxFuel = MAX_FUEL;
 let hull = MAX_HULL, maxHull = MAX_HULL;
-let inventory = {}, gameOver = false, shopOpen = false, keys = {}, moveTimer = 0;
+let inventory = {}, gameOver = false, shopOpen = false, settingsOpen = false, keys = {}, moveTimer = 0;
+
 const MOVE_DELAY = 8;
 let upgradeLevels = { drillPower:0, moveSpeed:0, fuelEfficiency:0, fuelCapacity:0, hullPlating:0 };
 let comboCount = 0, comboMultiplier = 1, comboTimer = 0;
 const COMBO_TIMER_MAX = 180; // 3s @ 60fps
 let soundEnabled = true;
 let unobtainiumFound = false;
+
+// ── Settings ─────────────────────────────────────────────────────────────────
+const SETTINGS_KEY = 'gemdigger_settings';
+let settings = { dpad: true, sfx: true, sfxVol: 0.8, music: true, musicVol: 0.25 };
+function loadSettings() {
+    try {
+        const saved = JSON.parse(localStorage.getItem(SETTINGS_KEY) || 'null');
+        if (saved) settings = Object.assign(settings, saved);
+    } catch(e) {}
+    soundEnabled = settings.sfx;
+    applySettingsToUI();
+    applyDpadVisibility();
+}
+function saveSettings() { localStorage.setItem(SETTINGS_KEY, JSON.stringify(settings)); }
+function applySettingsToUI() {
+    document.getElementById('setting-dpad').checked = settings.dpad;
+    document.getElementById('setting-sfx').checked = settings.sfx;
+    document.getElementById('setting-sfx-vol').value = settings.sfxVol;
+    document.getElementById('setting-music').checked = settings.music;
+    document.getElementById('setting-music-vol').value = settings.musicVol;
+    document.getElementById('sound-toggle').textContent = settings.sfx ? '🔊' : '🔇';
+}
+function applyDpadVisibility() {
+    dpadEl.style.display = settings.dpad ? 'grid' : 'none';
+}
+
 
 function getUpgradeValue(id) {
     const lvl = upgradeLevels[id];
@@ -318,7 +391,7 @@ function beep(freq, duration, type, gainVal) {
         const ctxA = getAudioCtx();
         const osc = ctxA.createOscillator(); const gain = ctxA.createGain();
         osc.type = type || 'sine'; osc.frequency.value = freq;
-        gain.gain.setValueAtTime(gainVal || 0.15, ctxA.currentTime);
+        gain.gain.setValueAtTime((gainVal || 0.15) * settings.sfxVol, ctxA.currentTime);
         gain.gain.exponentialRampToValueAtTime(0.001, ctxA.currentTime + duration);
         osc.connect(gain); gain.connect(ctxA.destination);
         osc.start(); osc.stop(ctxA.currentTime + duration);
@@ -331,11 +404,58 @@ function sfxLava() { beep(80,0.3,'sawtooth',0.15); }
 function sfxCavein() { beep(60,0.4,'sawtooth',0.12); }
 function sfxLegendary() { [523,659,784,1046].forEach((f,i)=>setTimeout(()=>beep(f,0.3,'sine',0.15), i*120)); }
 function sfxShop() { beep(600,0.08,'square',0.08); }
+function sfxLowWarning() { beep(220,0.12,'sine',0.08); }
+function sfxHullWarning() { beep(150,0.15,'square',0.1); }
 
 document.getElementById('sound-toggle').addEventListener('click', function() {
-    soundEnabled = !soundEnabled;
+    settings.sfx = !settings.sfx;
+    soundEnabled = settings.sfx;
     this.textContent = soundEnabled ? '🔊' : '🔇';
+    saveSettings();
 });
+
+// ── Background Music (procedural loop) ──────────────────────────────────────
+let musicStarted = false, musicNodes = [];
+function startMusic() {
+    if (musicStarted || !settings.music) return;
+    musicStarted = true;
+    try {
+        const ctxA = getAudioCtx();
+        const notes = [130.81, 164.81, 196.00, 164.81]; // simple bass loop (C3,E3,G3,E3)
+        let step = 0;
+        function playStep() {
+            if (!settings.music) { musicStarted = false; return; }
+            const ctxA2 = getAudioCtx();
+            const osc = ctxA2.createOscillator(); const gain = ctxA2.createGain();
+            osc.type = 'sine'; osc.frequency.value = notes[step % notes.length];
+            gain.gain.setValueAtTime(0.0001, ctxA2.currentTime);
+            gain.gain.linearRampToValueAtTime(0.12*settings.musicVol, ctxA2.currentTime+0.1);
+            gain.gain.linearRampToValueAtTime(0.0001, ctxA2.currentTime+0.9);
+            osc.connect(gain); gain.connect(ctxA2.destination);
+            osc.start(); osc.stop(ctxA2.currentTime+1.0);
+            step++;
+            setTimeout(playStep, 1000);
+        }
+        playStep();
+    } catch(e) {}
+}
+function tryStartMusicOnGesture() {
+    if (settings.music && !musicStarted) startMusic();
+    window.removeEventListener('keydown', tryStartMusicOnGesture);
+    window.removeEventListener('mousedown', tryStartMusicOnGesture);
+    window.removeEventListener('touchstart', tryStartMusicOnGesture);
+}
+window.addEventListener('keydown', tryStartMusicOnGesture);
+window.addEventListener('mousedown', tryStartMusicOnGesture);
+window.addEventListener('touchstart', tryStartMusicOnGesture);
+
+// ── Low-Fuel / Hull Warnings ─────────────────────────────────────────────────
+let lowFuelTimer = 0, lastHullWarnThreshold = 100;
+function screenFlash() {
+    screenFlashEl.classList.add('active');
+    setTimeout(()=>screenFlashEl.classList.remove('active'), 150);
+}
+
 
 // ── Particles ────────────────────────────────────────────────────────────────
 let particles = [];
@@ -532,6 +652,18 @@ document.getElementById('lb-toggle').addEventListener('click', ()=>{ renderLeade
 document.getElementById('overlay-lb-btn').addEventListener('click', ()=>{ renderLeaderboard(); lbOverlayEl.classList.add('visible'); });
 document.getElementById('lb-close-btn').addEventListener('click', ()=>{ lbOverlayEl.classList.remove('visible'); });
 
+// ── Settings Overlay Controls ────────────────────────────────────────────────
+function openSettings() { settingsOpen = true; applySettingsToUI(); settingsOverlayEl.classList.add('visible'); }
+function closeSettings() { settingsOpen = false; settingsOverlayEl.classList.remove('visible'); }
+document.getElementById('settings-toggle').addEventListener('click', openSettings);
+document.getElementById('settings-close-btn').addEventListener('click', closeSettings);
+document.getElementById('setting-dpad').addEventListener('change', function(){ settings.dpad = this.checked; applyDpadVisibility(); saveSettings(); });
+document.getElementById('setting-sfx').addEventListener('change', function(){ settings.sfx = this.checked; soundEnabled = settings.sfx; document.getElementById('sound-toggle').textContent = soundEnabled?'🔊':'🔇'; saveSettings(); });
+document.getElementById('setting-sfx-vol').addEventListener('input', function(){ settings.sfxVol = parseFloat(this.value); saveSettings(); });
+document.getElementById('setting-music').addEventListener('change', function(){ settings.music = this.checked; saveSettings(); if (settings.music) startMusic(); });
+document.getElementById('setting-music-vol').addEventListener('input', function(){ settings.musicVol = parseFloat(this.value); saveSettings(); });
+
+
 // ── Floating Text ──────────────────────────────────────────────────────────
 let floatingTexts = [];
 function showFloatingText(text, gridX, gridY, color) {
@@ -576,16 +708,20 @@ function updateUI() {
 
     const fuelPct = (fuel/maxFuel)*100; fuelBar.style.width = fuelPct+'%';
     fuelBar.style.background = fuelPct>50?'#2ecc71':fuelPct>25?'#f39c12':'#e74c3c';
+    fuelBar.classList.toggle('pulse', fuelPct <= 20 && fuelPct > 0);
     const hullPct = (hull/maxHull)*100; hullBar.style.width = hullPct+'%';
     hullBar.style.background = hullPct>50?'#3498db':hullPct>25?'#e67e22':'#c0392b';
+    hullBar.classList.toggle('pulse', hullPct <= 25 && hullPct > 0);
 
     const gemList = Object.entries(inventory).map(([k,v])=>`${v}x ${k}`).join(', ');
     inventoryElement.textContent = 'Gems: '+(gemList||'None');
 }
 
+
 // ── Update Loop ──────────────────────────────────────────────────────────────
 function update() {
-    if (gameOver || shopOpen) return;
+    if (gameOver || shopOpen || settingsOpen) return;
+
 
     if (moveTimer > 0) moveTimer--;
     else {
@@ -608,12 +744,25 @@ function update() {
 
     if (comboTimer > 0) { comboTimer--; if (comboTimer===0) resetCombo(); }
 
+    // Low-fuel warning sfx
+    if (fuel > 0 && fuel/maxFuel <= 0.2) {
+        lowFuelTimer--;
+        if (lowFuelTimer <= 0) { sfxLowWarning(); lowFuelTimer = 90; }
+    } else { lowFuelTimer = 0; }
+
+    // Hull damage threshold sfx + screen flash (crossing 50%/25%)
+    const hullPct = hull/maxHull*100;
+    if (hullPct <= 50 && lastHullWarnThreshold > 50) { sfxHullWarning(); screenFlash(); }
+    if (hullPct <= 25 && lastHullWarnThreshold > 25) { sfxHullWarning(); screenFlash(); }
+    lastHullWarnThreshold = hullPct;
+
     // Update particles
     particles = particles.filter(p=>p.life>0);
     for (const p of particles) { p.x+=p.vx; p.y+=p.vy; p.vy+=0.15; p.life--; }
 
     updateUI();
 }
+
 
 // ── Draw ────────────────────────────────────────────────────────────────────
 function draw() {
@@ -760,12 +909,51 @@ function draw() {
 function gameLoop() { update(); draw(); requestAnimationFrame(gameLoop); }
 
 // ── Input ────────────────────────────────────────────────────────────────────
+let shopHighlightIndex = 0;
 window.addEventListener('keydown', (e)=>{
+    // Game Over overlay keyboard controls
+    if (overlay.classList.contains('visible')) {
+        if (e.key === 'Enter' || e.key === ' ') { e.preventDefault(); init(); return; }
+        if (e.key === 'Escape' || e.key.toLowerCase() === 'l') { e.preventDefault(); renderLeaderboard(); lbOverlayEl.classList.add('visible'); return; }
+        return;
+    }
+    // Leaderboard overlay keyboard controls
+    if (lbOverlayEl.classList.contains('visible')) {
+        if (e.key === 'Enter' || e.key === 'Escape') { e.preventDefault(); lbOverlayEl.classList.remove('visible'); }
+        return;
+    }
+    // Settings overlay keyboard controls
+    if (settingsOverlayEl.classList.contains('visible')) {
+        if (e.key === 'Escape' || e.key === 'Enter') { e.preventDefault(); closeSettings(); }
+        return;
+    }
+    // Shop overlay keyboard controls
+    if (shopOverlayEl.classList.contains('visible')) {
+        const items = document.querySelectorAll('#shop-grid .shop-item');
+        if (e.key === 'ArrowRight' || e.key === 'ArrowDown') {
+            e.preventDefault();
+            shopHighlightIndex = (shopHighlightIndex+1) % items.length;
+            items.forEach((it,i)=>it.classList.toggle('highlighted', i===shopHighlightIndex));
+        } else if (e.key === 'ArrowLeft' || e.key === 'ArrowUp') {
+            e.preventDefault();
+            shopHighlightIndex = (shopHighlightIndex-1+items.length) % items.length;
+            items.forEach((it,i)=>it.classList.toggle('highlighted', i===shopHighlightIndex));
+        } else if (e.key === 'Enter' || e.key === ' ') {
+            e.preventDefault();
+            const item = items[shopHighlightIndex];
+            if (item) item.click();
+        } else if (e.key === 'Escape') {
+            e.preventDefault(); closeShop();
+        }
+        return;
+    }
+
     if (['ArrowUp','ArrowDown','ArrowLeft','ArrowRight'].includes(e.key)) {
         e.preventDefault();
         if (!keys[e.key]) { keys[e.key]=true; moveTimer=0; } else keys[e.key]=true;
     }
 });
+
 window.addEventListener('keyup', (e)=>{
     keys[e.key]=false;
     const anyHeld = ['ArrowUp','ArrowDown','ArrowLeft','ArrowRight'].some(k=>keys[k]);
@@ -786,8 +974,10 @@ Object.entries(dpadBtnMap).forEach(([id,dir])=>{
     btn.addEventListener('mouseleave', stopMove);
 });
 
+loadSettings();
 init();
 gameLoop();
 </script>
+
 </body>
 </html>

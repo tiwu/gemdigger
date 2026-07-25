@@ -14,6 +14,8 @@ Open `index.html` in any modern browser — no server, no dependencies required.
 | On-screen D-Pad | Move / Dig (mobile/touch) |
 | 🔊 button (top right) | Toggle sound on/off |
 | 🏆 button (top right) | View leaderboard |
+| ⚙️ button (top right) | Open settings (D-pad visibility, SFX/music volume) |
+
 
 ### Objective
 
@@ -142,6 +144,8 @@ See [plan.md](plan.md) for the full development plan and progress log.
 - ✅ Phase 8 — Hull/Damage System (separate from fuel, Hull Plating upgrade)
 - ✅ Phase 9 — Audio & Particle Effects
 - ✅ Phase 10 — Local Leaderboard
+- ✅ Phase 12 — Accessibility, Audio Settings & Background Music (settings overlay, procedural music, low-fuel/hull warnings, full keyboard navigation for overlays)
+
 
 **Potential future features:**
 - Drill skins / cosmetic unlocks

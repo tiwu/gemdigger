@@ -160,21 +160,22 @@ Single-file HTML/CSS/JS solution for easy deployment and immediate usability.
 - **Particles**: Simple array-based system with gravity (`vy += 0.15`) and alpha fade-out tied to `life`.
 - **Leaderboard**: Stored as a sorted JSON array in `localStorage`, capped at the top 10 entries by score.
 
-### Phase 12 — Accessibility, Audio & Settings (In Progress)
-- [ ] Settings overlay (⚙️ button) with:
-  - [ ] D-pad visibility toggle
-  - [ ] SFX on/off + volume slider
-  - [ ] Music on/off + volume slider
-  - [ ] Persisted to `localStorage` (`gemdigger_settings`), music defaults ON at modest volume
-- [ ] Wire D-pad visibility + SFX volume into existing dpad/audio code
-- [ ] Procedural background music loop (Web Audio API), lazily started on first user gesture
-- [ ] Low-fuel warning sfx (periodic beep below threshold) + pulsing fuel bar
-- [ ] Hull damage threshold sfx (crossing 50%/25%) + pulsing hull bar + brief red screen flash on hit
-- [ ] Full keyboard accessibility for overlays (no mouse required):
-  - [ ] Game Over overlay: `Enter`/`Space` = restart, `Esc`/`L` = leaderboard
-  - [ ] Leaderboard overlay: `Enter`/`Esc` = close
-  - [ ] Shop overlay: arrow keys to highlight an upgrade, `Enter`/`Space` to confirm purchase, `Esc` to close
-- [ ] README.md updated with new settings/audio/keyboard features
+### Phase 12 — Accessibility, Audio & Settings ✅
+- [x] Settings overlay (⚙️ button) with:
+  - [x] D-pad visibility toggle
+  - [x] SFX on/off + volume slider
+  - [x] Music on/off + volume slider
+  - [x] Persisted to `localStorage` (`gemdigger_settings`), music defaults ON at modest volume
+- [x] Wire D-pad visibility + SFX volume into existing dpad/audio code
+- [x] Procedural background music loop (Web Audio API), lazily started on first user gesture
+- [x] Low-fuel warning sfx (periodic beep below threshold) + pulsing fuel bar
+- [x] Hull damage threshold sfx (crossing 50%/25%) + pulsing hull bar + brief red screen flash on hit
+- [x] Full keyboard accessibility for overlays (no mouse required):
+  - [x] Game Over overlay: `Enter`/`Space` = restart, `Esc`/`L` = leaderboard
+  - [x] Leaderboard overlay: `Enter`/`Esc` = close
+  - [x] Shop overlay: arrow keys to highlight an upgrade, `Enter`/`Space` to confirm purchase, `Esc` to close
+- [x] README.md updated with new settings/audio/keyboard features
+
 
 ## Potential Future Features
 
