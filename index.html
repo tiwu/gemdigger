@@ -107,11 +107,15 @@ canvas { background-color: #0a0a0a; box-shadow: 0 0 30px rgba(0,0,0,0.8); image-
     <div class="stat">Hull:</div>
     <div class="bar-container"><div id="hull-bar" class="bar-fill" style="width:100%"></div></div>
     <div id="inventory">Gems: None</div>
+    <div class="stat" id="outpost-stat" style="color:#f39c12;">🚧 Outposts: 0 carried, 0 placed</div>
 </div>
 
 <button id="sound-toggle">🔊</button>
 <button id="lb-toggle">🏆</button>
 <button id="settings-toggle">⚙️</button>
+<button id="help-toggle" style="position:absolute; top:10px; right:160px; background: rgba(0,0,0,0.7); border: 1px solid #4a6fa5; color: white; font-size: 16px; padding: 8px 12px; border-radius: 8px; cursor: pointer; z-index: 10;">❓</button>
+<button id="deploy-outpost-btn" style="position:absolute; bottom:100px; right:20px; background: rgba(243,156,18,0.85); border: 1px solid #b9770e; color: white; font-size: 13px; padding: 10px 14px; border-radius: 8px; cursor: pointer; z-index: 15; display:none;">🚧 Deploy (E)</button>
+
 
 <canvas id="gameCanvas"></canvas>
 <div id="screen-flash"></div>
@@ -168,9 +172,29 @@ canvas { background-color: #0a0a0a; box-shadow: 0 0 30px rgba(0,0,0,0.8); image-
     <button class="big-btn red" id="settings-close-btn">Close</button>
 </div>
 
+<div id="tutorial-overlay" style="display:none; position:absolute; top:0; left:0; right:0; bottom:0; background: rgba(0,0,0,0.88); flex-direction: column; align-items: center; justify-content: center; z-index: 30;">
+    <div style="max-width:560px; width:90%; background:rgba(20,25,35,0.95); border:1px solid #4a6fa5; border-radius:12px; padding:24px 28px;">
+        <h2 style="margin:0 0 12px 0; color:#f0c040; text-shadow:0 0 10px #f0c040;">⛏ Welcome to GemDigger!</h2>
+        <ul style="font-size:14px; line-height:1.7; color:#dfe6e9; padding-left:20px; margin:0 0 18px 0;">
+            <li>Move with <b>Arrow Keys</b> or the <b>D-Pad</b> to dig through dirt, stone and gems.</li>
+            <li><b>⛽ Fuel</b> drains as you move/dig, and drains faster the deeper you go. <b>🛡️ Hull</b> takes damage from lava and cave-ins. Run out of either and it's game over!</li>
+            <li>Dig up <b>gems</b> (Gold, Ruby, Emerald, Diamond, Sapphire, Unobtainium) for score. Chain gem hits quickly for a <b>combo multiplier</b>.</li>
+            <li>Each <b>biome</b> (Surface, Cavern, Ice Layer, Magma Layer, Deep Core) has distinct rock colors, gem chances, hazards and music.</li>
+            <li>Return to the <b>🏠 Surface Base</b> to refuel and spend score on drill upgrades.</li>
+            <li>Buy a <b>🚧 Outpost Kit</b> at the shop, carry it deep, and deploy it (button or <b>E</b> key) on cleared ground to refuel without the long trip back to the surface. Max 2 outposts per run!</li>
+        </ul>
+        <div style="text-align:center;">
+            <button class="big-btn" id="tutorial-close-btn">Let's Dig! ⛏</button>
+        </div>
+    </div>
+</div>
+
+
+<script src="game-logic.js"></script>
 
 <script>
 const canvas = document.getElementById('gameCanvas');
+
 const ctx = canvas.getContext('2d');
 const scoreElement = document.getElementById('score');
 const depthElement = document.getElementById('depth');
@@ -194,29 +218,26 @@ const screenFlashEl = document.getElementById('screen-flash');
 // ── Configuration ──────────────────────────────────────────────────────────
 const TILE_SIZE = 40;
 const GRID_WIDTH = 80;
-const GRID_HEIGHT = 120;
+const GRID_HEIGHT = 200;
 const VIEW_TILES_X = 20, VIEW_TILES_Y = 15;
 canvas.width = VIEW_TILES_X * TILE_SIZE;
 canvas.height = VIEW_TILES_Y * TILE_SIZE;
 
-const TILES = {
-    EMPTY:0, DIRT:1, STONE:2, GOLD:3, DIAMOND:4, BEDROCK:5, FUEL:6, BASE:7,
-    LAVA:8, UNSTABLE:9, RUBY:10, EMERALD:11, SAPPHIRE:12, UNOBTAINIUM:13
-};
+const TILES = GameLogic.TILES;
 
 const TILE_COLORS = {
     [TILES.EMPTY]:'#111', [TILES.DIRT]:'#8b4513', [TILES.STONE]:'#6b7280',
     [TILES.GOLD]:'#ffd700', [TILES.DIAMOND]:'#00e5ff', [TILES.BEDROCK]:'#2d2d2d',
     [TILES.FUEL]:'#e67e22', [TILES.BASE]:'#27ae60', [TILES.LAVA]:'#c0392b',
     [TILES.UNSTABLE]:'#a0522d', [TILES.RUBY]:'#e0115f', [TILES.EMERALD]:'#50c878',
-    [TILES.SAPPHIRE]:'#0f52ba', [TILES.UNOBTAINIUM]:'#ffffff'
+    [TILES.SAPPHIRE]:'#0f52ba', [TILES.UNOBTAINIUM]:'#ffffff', [TILES.OUTPOST]:'#f39c12'
 };
 const TILE_BORDER_COLORS = {
     [TILES.EMPTY]:'#111', [TILES.DIRT]:'#6b3410', [TILES.STONE]:'#4b5563',
     [TILES.GOLD]:'#b8960a', [TILES.DIAMOND]:'#0099aa', [TILES.BEDROCK]:'#1a1a1a',
     [TILES.FUEL]:'#a04010', [TILES.BASE]:'#1a7a40', [TILES.LAVA]:'#7b0000',
     [TILES.UNSTABLE]:'#6b3010', [TILES.RUBY]:'#8a0a3c', [TILES.EMERALD]:'#2e8b4f',
-    [TILES.SAPPHIRE]:'#0a2f6e', [TILES.UNOBTAINIUM]:'#888'
+    [TILES.SAPPHIRE]:'#0a2f6e', [TILES.UNOBTAINIUM]:'#888', [TILES.OUTPOST]:'#b9770e'
 };
 
 const GEM_REWARDS = {
@@ -229,23 +250,16 @@ const GEM_NAMES = {
 };
 
 // ── Biomes ──────────────────────────────────────────────────────────────────
-const BIOMES = [
-    { name:'Surface',   from:0.00, to:0.08, bg:'#1a252f', tint:null },
-    { name:'Cavern',    from:0.08, to:0.35, bg:'#241a14', tint:null },
-    { name:'Ice Layer', from:0.35, to:0.55, bg:'#16232e', tint:'rgba(100,180,255,0.06)' },
-    { name:'Magma Layer',from:0.55, to:0.78, bg:'#2a1210', tint:'rgba(255,80,20,0.08)' },
-    { name:'Deep Core', from:0.78, to:1.01, bg:'#050505', tint:'rgba(150,0,255,0.05)' }
-];
-function getBiome(depthFrac) {
-    for (const b of BIOMES) if (depthFrac >= b.from && depthFrac < b.to) return b;
-    return BIOMES[BIOMES.length-1];
-}
+const BIOMES = GameLogic.BIOMES;
+function getBiome(depthFrac) { return GameLogic.getBiome(depthFrac); }
 
 const FUEL_PER_MOVE = 2, FUEL_PER_STONE = 3, MAX_FUEL = 200;
 const FUEL_CANISTER_AMOUNT = 40;
 const MAX_HULL = 100;
 const LAVA_FUEL_DAMAGE = 30, LAVA_HULL_DAMAGE = 20;
 const CAVEIN_HULL_DAMAGE = 15;
+const UNOBTAINIUM_COUNT = 3;
+
 
 const UPGRADES = [
     { id:'drillPower', name:'⚙️ Drill Power', desc:'Increases drill strength', costs:[0,100,250,500,1000], maxLevel:4 },
@@ -254,6 +268,11 @@ const UPGRADES = [
     { id:'fuelCapacity', name:'🛢️ Fuel Tank', desc:'Increases max fuel capacity', costs:[0,150,350,700], maxLevel:3 },
     { id:'hullPlating', name:'🛡️ Hull Plating', desc:'Increases max hull & reduces damage', costs:[0,150,350,700], maxLevel:3 }
 ];
+
+// ── Outposts ─────────────────────────────────────────────────────────────────
+const MAX_OUTPOSTS = GameLogic.MAX_OUTPOSTS;
+const OUTPOST_KIT_COSTS = GameLogic.OUTPOST_KIT_COSTS;
+
 
 // ── Game State ───────────────────────────────────────────────────────────────
 let grid = [], player = {}, score = 0, fuel = MAX_FUEL, maxFuel = MAX_FUEL;
@@ -266,6 +285,8 @@ let comboCount = 0, comboMultiplier = 1, comboTimer = 0;
 const COMBO_TIMER_MAX = 180; // 3s @ 60fps
 let soundEnabled = true;
 let unobtainiumFound = false;
+let carriedOutposts = 0, placedOutposts = 0, purchasedOutposts = 0;
+
 
 // ── Settings ─────────────────────────────────────────────────────────────────
 const SETTINGS_KEY = 'gemdigger_settings';
@@ -314,6 +335,8 @@ function init() {
     inventory = {}; gameOver = false; shopOpen = false; keys = {}; moveTimer = 0;
     comboCount = 0; comboMultiplier = 1; comboTimer = 0;
     unobtainiumFound = false;
+    carriedOutposts = 0; placedOutposts = 0; purchasedOutposts = 0;
+
 
     const startX = Math.floor(GRID_WIDTH/2), startY = 2;
     player = {
@@ -337,26 +360,7 @@ function generateWorld() {
             const biome = getBiome(depth);
             const rand = Math.random();
 
-            const stoneP = 0.05 + depth*0.35;
-            const goldP = stoneP + 0.02 + depth*0.05;
-            const rubyP = goldP + (depth > 0.30 ? 0.02 : 0);
-            const emeraldP = rubyP + (depth > 0.50 ? 0.018 : 0);
-            const diamondP = emeraldP + Math.max(0, (depth-0.4)*0.03);
-            const sapphireP = diamondP + (depth > 0.75 ? 0.012 : 0);
-            const fuelP = sapphireP + 0.015*(1-depth*0.5);
-            const lavaP = fuelP + (biome.name==='Magma Layer' ? Math.max(0,(depth-0.5)*0.10) : Math.max(0,(depth-0.5)*0.03));
-            const unstableP = lavaP + Math.max(0,(depth-0.2)*0.04);
-
-            if (rand < stoneP) grid[y][x] = TILES.STONE;
-            else if (rand < goldP) grid[y][x] = TILES.GOLD;
-            else if (rand < rubyP) grid[y][x] = TILES.RUBY;
-            else if (rand < emeraldP) grid[y][x] = TILES.EMERALD;
-            else if (rand < diamondP) grid[y][x] = TILES.DIAMOND;
-            else if (rand < sapphireP) grid[y][x] = TILES.SAPPHIRE;
-            else if (rand < fuelP) grid[y][x] = TILES.FUEL;
-            else if (rand < lavaP) grid[y][x] = TILES.LAVA;
-            else if (rand < unstableP) grid[y][x] = TILES.UNSTABLE;
-            else grid[y][x] = TILES.DIRT;
+            grid[y][x] = GameLogic.pickTileForRoll(rand, depth, biome);
         }
     }
 
@@ -368,19 +372,20 @@ function generateWorld() {
     }
     grid[0][startX] = TILES.BASE;
 
-    // Place exactly one Unobtainium in the Deep Core zone
+    // Place several Unobtainium tiles scattered through the Deep Core zone
     const deepCoreStartY = Math.floor(2 + 0.80*(GRID_HEIGHT-3));
-    let placed = false, attempts = 0;
-    while (!placed && attempts < 500) {
+    let placedCount = 0, attempts = 0;
+    while (placedCount < UNOBTAINIUM_COUNT && attempts < 2000) {
         const rx = 1 + Math.floor(Math.random()*(GRID_WIDTH-2));
         const ry = deepCoreStartY + Math.floor(Math.random()*(GRID_HEIGHT-3-deepCoreStartY));
-        if (grid[ry] && grid[ry][rx] !== TILES.BEDROCK && grid[ry][rx] !== TILES.BASE) {
+        if (grid[ry] && grid[ry][rx] !== TILES.BEDROCK && grid[ry][rx] !== TILES.BASE && grid[ry][rx] !== TILES.UNOBTAINIUM) {
             grid[ry][rx] = TILES.UNOBTAINIUM;
-            placed = true;
+            placedCount++;
         }
         attempts++;
     }
 }
+
 
 // ── Sound (Web Audio API, procedural) ───────────────────────────────────────
 let audioCtx = null;
@@ -485,9 +490,11 @@ function tryMove(dx, dy) {
     const targetTile = grid[newGridY][newGridX];
     if (targetTile === TILES.BEDROCK) return;
 
-    let fuelCost = getUpgradeValue('fuelEfficiency');
-    if (targetTile === TILES.STONE) fuelCost += FUEL_PER_STONE;
+    const depthFracNow = Math.max(0, (player.gridY-2)/(GRID_HEIGHT-3));
+    let fuelCost = getUpgradeValue('fuelEfficiency') * GameLogic.getDepthFuelMultiplier(depthFracNow);
+    if (targetTile === TILES.STONE) fuelCost += FUEL_PER_STONE * GameLogic.getDepthFuelMultiplier(depthFracNow);
     if (fuel <= 0) { triggerGameOver('fuel'); return; }
+
 
     if (dx>0) player.facing='right'; else if (dx<0) player.facing='left';
     else if (dy>0) player.facing='down'; else if (dy<0) player.facing='up';
@@ -551,9 +558,16 @@ function tryMove(dx, dy) {
             return;
         }
 
+        if (targetTile === TILES.OUTPOST) {
+            fuel = maxFuel; hull = maxHull;
+            showFloatingText('Outpost Refuel!', newGridX, newGridY, '#f39c12');
+            sfxFuel();
+        }
+
         if (targetTile === TILES.UNSTABLE) {
             grid[newGridY][newGridX] = TILES.EMPTY;
             showFloatingText('Cave-in!', newGridX, newGridY, '#e67e22');
+
             spawnParticles(newGridX, newGridY, '#a0522d', 14);
             sfxCavein();
             resetCombo();
@@ -630,7 +644,24 @@ function renderShop() {
         if (canAfford) div.addEventListener('click', ()=>{ score-=cost; upgradeLevels[upg.id]++; sfxShop(); renderShop(); });
         gridEl.appendChild(div);
     }
+
+    // Outpost Kit purchase item
+    const outCanBuy = GameLogic.canBuyOutpost(purchasedOutposts);
+    const outCost = GameLogic.getOutpostKitCost(purchasedOutposts);
+    const outAfford = outCanBuy && score >= outCost;
+    const outDiv = document.createElement('div');
+    outDiv.className = 'shop-item' + ((!outAfford && outCanBuy) ? ' disabled' : '');
+    outDiv.innerHTML = `<span class="item-level">${purchasedOutposts}/${MAX_OUTPOSTS} bought</span>
+        <div class="item-name">🚧 Outpost Kit</div>
+        <div class="item-desc">Carry it deep, deploy on cleared ground to refuel without returning to base.</div>
+        <div class="item-cost">${outCanBuy?`Cost: ${outCost} pts`:'✅ All kits purchased'}</div>`;
+    if (outAfford) outDiv.addEventListener('click', ()=>{
+        score -= outCost; purchasedOutposts++; carriedOutposts++;
+        sfxShop(); renderShop();
+    });
+    gridEl.appendChild(outDiv);
 }
+
 document.getElementById('shop-close-btn').addEventListener('click', closeShop);
 
 // ── Leaderboard ──────────────────────────────────────────────────────────────
@@ -660,7 +691,8 @@ document.getElementById('settings-close-btn').addEventListener('click', closeSet
 document.getElementById('setting-dpad').addEventListener('change', function(){ settings.dpad = this.checked; applyDpadVisibility(); saveSettings(); });
 document.getElementById('setting-sfx').addEventListener('change', function(){ settings.sfx = this.checked; soundEnabled = settings.sfx; document.getElementById('sound-toggle').textContent = soundEnabled?'🔊':'🔇'; saveSettings(); });
 document.getElementById('setting-sfx-vol').addEventListener('input', function(){ settings.sfxVol = parseFloat(this.value); saveSettings(); });
-document.getElementById('setting-music').addEventListener('change', function(){ settings.music = this.checked; saveSettings(); if (settings.music) startMusic(); });
+document.getElementById('setting-music').addEventListener('change', function(){ settings.music = this.checked; saveSettings(); if (settings.music) { currentMusicBiomeName = null; updateMusicForBiome(); } });
+
 document.getElementById('setting-music-vol').addEventListener('input', function(){ settings.musicVol = parseFloat(this.value); saveSettings(); });
 
 
@@ -715,7 +747,29 @@ function updateUI() {
 
     const gemList = Object.entries(inventory).map(([k,v])=>`${v}x ${k}`).join(', ');
     inventoryElement.textContent = 'Gems: '+(gemList||'None');
+
+    const outpostStatEl = document.getElementById('outpost-stat');
+    if (outpostStatEl) outpostStatEl.textContent = `🚧 Outposts: ${carriedOutposts} carried, ${placedOutposts} placed`;
+
+    const deployBtn = document.getElementById('deploy-outpost-btn');
+    if (deployBtn) {
+        const canDeploy = GameLogic.canPlaceOutpost(grid[player.gridY][player.gridX], carriedOutposts, placedOutposts);
+        deployBtn.style.display = canDeploy ? 'block' : 'none';
+    }
 }
+
+function deployOutpost() {
+    if (gameOver || shopOpen || settingsOpen) return;
+    const tile = grid[player.gridY][player.gridX];
+    if (!GameLogic.canPlaceOutpost(tile, carriedOutposts, placedOutposts)) return;
+    grid[player.gridY][player.gridX] = TILES.OUTPOST;
+    carriedOutposts--; placedOutposts++;
+    showFloatingText('Outpost Deployed!', player.gridX, player.gridY, '#f39c12');
+    sfxShop();
+    updateUI();
+}
+document.getElementById('deploy-outpost-btn').addEventListener('click', deployOutpost);
+
 
 
 // ── Update Loop ──────────────────────────────────────────────────────────────
@@ -790,13 +844,20 @@ function draw() {
         for (let x=startTileX; x<=endTileX; x++) {
             const type = grid[y][x];
             const px = x*TILE_SIZE, py = y*TILE_SIZE;
-            ctx.fillStyle = TILE_COLORS[type] || '#111';
+            const tileDepth = Math.max(0,(y-2)/(GRID_HEIGHT-3));
+            const tileBiome = getBiome(tileDepth);
+            if (type === TILES.STONE) { ctx.fillStyle = tileBiome.stoneColor; }
+            else if (type === TILES.DIRT) { ctx.fillStyle = tileBiome.dirtColor; }
+            else { ctx.fillStyle = TILE_COLORS[type] || '#111'; }
             ctx.fillRect(px,py,TILE_SIZE,TILE_SIZE);
             if (type !== TILES.EMPTY) {
-                ctx.strokeStyle = TILE_BORDER_COLORS[type] || '#000';
+                if (type === TILES.STONE) ctx.strokeStyle = tileBiome.stoneBorder;
+                else if (type === TILES.DIRT) ctx.strokeStyle = tileBiome.dirtBorder;
+                else ctx.strokeStyle = TILE_BORDER_COLORS[type] || '#000';
                 ctx.lineWidth = 1;
                 ctx.strokeRect(px+0.5,py+0.5,TILE_SIZE-1,TILE_SIZE-1);
             }
+
 
             if ([TILES.GOLD,TILES.DIAMOND,TILES.RUBY,TILES.EMERALD,TILES.SAPPHIRE].includes(type)) {
                 ctx.save();
@@ -858,8 +919,18 @@ function draw() {
                 ctx.fillText('🏠', px+TILE_SIZE/2, py+TILE_SIZE/2);
                 ctx.restore();
             }
+
+            if (type === TILES.OUTPOST) {
+                ctx.save();
+                ctx.globalAlpha = 0.85+0.15*Math.sin(Date.now()/350);
+                ctx.fillStyle='#fff'; ctx.font=`bold ${TILE_SIZE*0.55}px sans-serif`;
+                ctx.textAlign='center'; ctx.textBaseline='middle';
+                ctx.fillText('🚧', px+TILE_SIZE/2, py+TILE_SIZE/2);
+                ctx.restore();
+            }
         }
     }
+
 
     // Biome tint overlay
     if (biome.tint) {
@@ -952,7 +1023,9 @@ window.addEventListener('keydown', (e)=>{
         e.preventDefault();
         if (!keys[e.key]) { keys[e.key]=true; moveTimer=0; } else keys[e.key]=true;
     }
+    if (e.key.toLowerCase() === 'e') { e.preventDefault(); deployOutpost(); }
 });
+
 
 window.addEventListener('keyup', (e)=>{
     keys[e.key]=false;
@@ -974,10 +1047,62 @@ Object.entries(dpadBtnMap).forEach(([id,dir])=>{
     btn.addEventListener('mouseleave', stopMove);
 });
 
+// ── Biome-specific Music Switching ──────────────────────────────────────────
+const BIOME_MUSIC = {
+    'Surface':    { notes:[130.81, 164.81, 196.00, 164.81], type:'sine', stepMs:1000 },
+    'Cavern':     { notes:[110.00, 130.81, 146.83, 130.81], type:'triangle', stepMs:1100 },
+    'Ice Layer':  { notes:[174.61, 220.00, 261.63, 220.00], type:'sine', stepMs:1300 },
+    'Magma Layer':{ notes:[98.00, 116.54, 87.31, 116.54], type:'sawtooth', stepMs:850 },
+    'Deep Core':  { notes:[65.41, 98.00, 73.42, 55.00], type:'sine', stepMs:1500 }
+};
+let currentMusicBiomeName = null;
+function playMusicStep(biomeConf, stepRef) {
+    if (!settings.music) { musicStarted = false; return; }
+    if (stepRef.biomeName !== currentMusicBiomeName) return; // biome changed, stop this loop
+    const ctxA2 = getAudioCtx();
+    const osc = ctxA2.createOscillator(); const gain = ctxA2.createGain();
+    osc.type = biomeConf.type; osc.frequency.value = biomeConf.notes[stepRef.step % biomeConf.notes.length];
+    gain.gain.setValueAtTime(0.0001, ctxA2.currentTime);
+    gain.gain.linearRampToValueAtTime(0.12*settings.musicVol, ctxA2.currentTime+0.1);
+    gain.gain.linearRampToValueAtTime(0.0001, ctxA2.currentTime + biomeConf.stepMs/1000*0.9);
+    osc.connect(gain); gain.connect(ctxA2.destination);
+    osc.start(); osc.stop(ctxA2.currentTime + biomeConf.stepMs/1000);
+    stepRef.step++;
+    setTimeout(()=>playMusicStep(biomeConf, stepRef), biomeConf.stepMs);
+}
+function startBiomeMusic(biomeName) {
+    if (!settings.music) return;
+    currentMusicBiomeName = biomeName;
+    musicStarted = true;
+    try {
+        const biomeConf = BIOME_MUSIC[biomeName] || BIOME_MUSIC['Surface'];
+        playMusicStep(biomeConf, { step:0, biomeName });
+    } catch(e) {}
+}
+function updateMusicForBiome() {
+    if (!settings.music) return;
+    const depthFrac = Math.max(0,(player.gridY-2)/(GRID_HEIGHT-3));
+    const biomeName = getBiome(depthFrac).name;
+    if (biomeName !== currentMusicBiomeName) {
+        startBiomeMusic(biomeName);
+    }
+}
+
+// ── Tutorial Modal ───────────────────────────────────────────────────────────
+const TUTORIAL_KEY = 'gemdigger_tutorial_seen';
+const tutorialOverlayEl = document.getElementById('tutorial-overlay');
+function openTutorial() { tutorialOverlayEl.style.display = 'flex'; }
+function closeTutorial() { tutorialOverlayEl.style.display = 'none'; localStorage.setItem(TUTORIAL_KEY, '1'); }
+document.getElementById('tutorial-close-btn').addEventListener('click', closeTutorial);
+document.getElementById('help-toggle').addEventListener('click', openTutorial);
+if (!localStorage.getItem(TUTORIAL_KEY)) openTutorial();
+
 loadSettings();
 init();
 gameLoop();
+setInterval(updateMusicForBiome, 500);
 </script>
+
 
 </body>
 </html>

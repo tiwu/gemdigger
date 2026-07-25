@@ -1,0 +1,10 @@
+{
+  "name": "gemdigger",
+  "version": "1.0.0",
+  "description": "A mining/digging game with gems, biomes, and outposts.",
+  "private": true,
+  "scripts": {
+    "test": "node --test tests/*.test.js"
+
+  }
+}

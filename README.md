@@ -15,11 +15,16 @@ Open `index.html` in any modern browser — no server, no dependencies required.
 | 🔊 button (top right) | Toggle sound on/off |
 | 🏆 button (top right) | View leaderboard |
 | ⚙️ button (top right) | Open settings (D-pad visibility, SFX/music volume) |
+| ❓ button (top right) | Reopen the tutorial/help modal |
+| E / 🚧 Deploy button | Deploy a carried Outpost Kit on your current tile |
 
 
 ### Objective
 
-Dig as deep as possible through 5 distinct biomes to find increasingly valuable gems. Chain gem hits for combo multipliers. Manage both **Fuel** and **Hull Integrity** — run out of either and your run ends. Return to the **🏠 Surface Base** to refuel, repair, and spend your score on upgrades. Somewhere in the deepest layer lies a single, one-of-a-kind **Unobtainium** — find it for a massive score bonus!
+Dig as deep as possible through 5 distinct biomes to find increasingly valuable gems. Chain gem hits for combo multipliers. Manage both **Fuel** and **Hull Integrity** — run out of either and your run ends. Return to the **🏠 Surface Base** to refuel, repair, and spend your score on upgrades. Fuel drains faster the deeper you go, so buy **🚧 Outpost Kits** and deploy them underground as forward refueling points — you'll need them to survive round trips to the Deep Core. Somewhere in the deepest layer lie **3 one-of-a-kind Unobtainium** deposits — find them for a massive score bonus each!
+
+A short tutorial modal explains all of this the first time you load the page (reopen anytime with the ❓ button).
+
 
 ---
 
@@ -34,10 +39,11 @@ Dig as deep as possible through 5 distinct biomes to find increasingly valuable 
 | 🟢 Emerald | Green glow | +150 score, found from the Magma Layer down |
 | 🔵 Diamond | Cyan glow | +200 score, found deep |
 | 🔷 Sapphire | Blue glow | +300 score, Deep Core only |
-| ✨ **Unobtainium** | Rainbow pulse | **+5000 score — exactly ONE exists per world**, Deep Core only |
+| ✨ **Unobtainium** | Rainbow pulse | **+5000 score — 3 scattered in the Deep Core per world** |
 | Bedrock | Dark grey | Impassable border walls |
 | ⛽ Fuel Canister | Orange | Restores +40 fuel when dug |
 | 🏠 Base | Green | Surface refuel/repair station + shop |
+| 🚧 Outpost | Orange, pulsing | Player-deployed forward refuel point (max 2 per run) |
 | 🌋 Lava | Red/orange glow | **Impassable** — drains fuel AND hull on contact |
 | Unstable Rock | Brown + cracks | Digging triggers a nearby cave-in, may damage hull |
 
@@ -45,17 +51,29 @@ Dig as deep as possible through 5 distinct biomes to find increasingly valuable 
 
 ## 🌍 Biomes
 
-The 80×120 tile world (up to ~236m deep) is divided into 5 procedurally-varied biomes, each with its own palette and gem distribution:
+The 80×200 tile world (up to ~394m deep) is divided into 5 procedurally-varied biomes. Each biome has its own **stone and dirt color palette**, background tint, gem rarity weighting, and **ambient music track** — so descending through the mine feels distinctly different at every stage:
 
-| Biome | Depth | Look | Notable |
-|-------|-------|------|---------|
-| **Surface** | 0–8% | Neutral blue-grey | Starting area, base station |
-| **Cavern** | 8–35% | Dark brown | Gold begins appearing |
-| **Ice Layer** | 35–55% | Cool blue tint | Ruby begins appearing |
-| **Magma Layer** | 55–78% | Warm red tint | Heavy Lava, Emerald begins appearing |
-| **Deep Core** | 78–100% | Near-black, purple tint | Diamond, Sapphire, and the legendary Unobtainium |
+| Biome | Depth | Look | Gem Bias | Music |
+|-------|-------|------|----------|-------|
+| **Surface** | 0–8% | Grey stone, neutral blue-grey bg | Gold favored | Calm sine bassline |
+| **Cavern** | 8–35% | Tan/brown stone & dirt | Gold & Ruby favored | Slower triangle-wave loop |
+| **Ice Layer** | 35–55% | Pale blue-grey stone, cool tint | Sapphire & Diamond favored | Bright sine loop, higher notes |
+| **Magma Layer** | 55–78% | Dark reddish stone, warm tint | Ruby favored, heavy Lava | Tense sawtooth loop |
+| **Deep Core** | 78–100% | Near-black purple stone, purple tint | Diamond, Emerald & Sapphire favored, Unobtainium | Slow, deep sine loop |
 
-The current biome name is displayed in the UI next to your depth reading.
+The current biome name is displayed in the UI next to your depth reading, and the background music automatically crossfades to the new biome's track as you cross a depth boundary.
+
+---
+
+## 🚧 Outposts
+
+Fuel drain **scales with depth** — by the time you reach the Deep Core, round trips to the Surface Base become impractical. To compensate:
+
+- Buy up to **2 Outpost Kits** from the shop (increasing cost each time)
+- Carry a kit down and **deploy it** on any cleared (empty) tile using the **🚧 Deploy** button or the **E** key
+- Stepping onto a deployed Outpost fully refuels and repairs your drill instantly — no shop popup, just a quick pit-stop
+- Outposts are permanent for the rest of the run once placed
+
 
 ---
 
@@ -122,14 +140,26 @@ Your all-time **high score** is also tracked separately and shown in the top-lef
 - **No dependencies**: Pure vanilla JS, no frameworks or libraries
 - **Rendering**: HTML5 Canvas API with viewport culling (only visible tiles drawn each frame)
 - **Game loop**: `requestAnimationFrame` at 60fps, pauses while the shop is open
-- **World size**: 80×120 tiles (~236m max depth)
+- **World size**: 80×200 tiles (~394m max depth)
 - **Storage**: `localStorage` for high score + top-10 leaderboard
-- **Audio**: Web Audio API oscillators (no audio assets)
+- **Audio**: Web Audio API oscillators (no audio assets), with biome-specific ambient tracks
 - **Mobile**: On-screen D-Pad with touch + hold-to-repeat support
+- **Pure logic module**: `game-logic.js` holds framework-agnostic rules (biomes, tile-roll probabilities, upgrades, combo math, outpost rules) and is unit-tested independently of the DOM/canvas code in `index.html`
+
+---
+
+## ✅ Testing
+
+Unit tests for the pure game logic live in `tests/` and run via Node's built-in test runner:
+
+```bash
+npm test
+```
 
 ---
 
 ## 📋 Development Status
+
 
 See [plan.md](plan.md) for the full development plan and progress log.
 
@@ -145,6 +175,8 @@ See [plan.md](plan.md) for the full development plan and progress log.
 - ✅ Phase 9 — Audio & Particle Effects
 - ✅ Phase 10 — Local Leaderboard
 - ✅ Phase 12 — Accessibility, Audio Settings & Background Music (settings overlay, procedural music, low-fuel/hull warnings, full keyboard navigation for overlays)
+- ✅ Phase 13 — Biome Distinction & Outposts (per-biome stone/dirt colors, gem rarity weighting, biome-specific ambient music, depth-scaled fuel drain, deployable Outposts, 3x Unobtainium, tutorial modal, extracted/tested pure game-logic module)
+
 
 
 **Potential future features:**
