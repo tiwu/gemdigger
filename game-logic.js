@@ -78,8 +78,9 @@
     // Fuel drain scales with depth so a full round-trip to the surface becomes
     // impractical once deep in the mine -- this is what makes Outposts useful.
     function getDepthFuelMultiplier(depthFrac) {
-        return 1 + Math.max(0, depthFrac) * 2.2;
+        return 1 + Math.max(0, depthFrac) * 1.6;
     }
+
 
 
     // ── Combo / Reward math ─────────────────────────────────────────────────────
@@ -105,8 +106,9 @@
         const diamondP = emeraldP + w('DIAMOND', Math.max(0, (depth-0.4)*0.03));
         const sapphireP = diamondP + (depth > 0.75 ? w('SAPPHIRE', 0.012) : 0);
         const fuelP = sapphireP + 0.015*(1-depth*0.5);
-        const lavaP = fuelP + (biome && biome.name==='Magma Layer' ? Math.max(0,(depth-0.5)*0.10) : Math.max(0,(depth-0.5)*0.03));
-        const unstableP = lavaP + Math.max(0,(depth-0.2)*0.04);
+        const lavaP = fuelP + (biome && biome.name==='Magma Layer' ? Math.max(0,(depth-0.5)*0.16) : Math.max(0,(depth-0.5)*0.06));
+        const unstableP = lavaP + Math.max(0,(depth-0.15)*0.07);
+
 
         if (rand < stoneP) return TILES.STONE;
         if (rand < goldP) return TILES.GOLD;
@@ -140,6 +142,57 @@
         return tileType === TILES.EMPTY;
     }
 
+    // Outposts are permanent once placed, but each individual outpost has a
+    // cooldown after use before it can refuel/repair again.
+    const OUTPOST_COOLDOWN_MS = 25000;
+    // lastUsedAtMs: timestamp (ms) the outpost was last used, or null/undefined if never used.
+    function canUseOutpost(lastUsedAtMs, nowMs, cooldownMs) {
+        const cd = cooldownMs !== undefined ? cooldownMs : OUTPOST_COOLDOWN_MS;
+        if (lastUsedAtMs === null || lastUsedAtMs === undefined) return true;
+        return (nowMs - lastUsedAtMs) >= cd;
+    }
+    // Remaining cooldown time in ms (0 if ready)
+    function getOutpostCooldownRemaining(lastUsedAtMs, nowMs, cooldownMs) {
+        const cd = cooldownMs !== undefined ? cooldownMs : OUTPOST_COOLDOWN_MS;
+        if (lastUsedAtMs === null || lastUsedAtMs === undefined) return 0;
+        return Math.max(0, cd - (nowMs - lastUsedAtMs));
+    }
+
+    // ── Achievements ─────────────────────────────────────────────────────────
+    // Each achievement has a pure `check(stats)` predicate over cumulative
+    // player stats, a one-time score `reward`, and an optional permanent `perk`
+    // description (applied by the caller, e.g. a small stat bonus).
+    const ACHIEVEMENTS = [
+        { id:'depth_50', name:'Getting Dirty', desc:'Reach 50m depth', reward:200,
+          check: (s) => s.maxDepth >= 50 },
+        { id:'depth_150', name:'Spelunker', desc:'Reach 150m depth', reward:500,
+          check: (s) => s.maxDepth >= 150 },
+        { id:'depth_300', name:'Core Breacher', desc:'Reach 300m depth', reward:1000,
+          check: (s) => s.maxDepth >= 300 },
+        { id:'gems_50', name:'Rock Collector', desc:'Collect 50 gems total', reward:300,
+          check: (s) => s.totalGems >= 50 },
+        { id:'gems_200', name:'Gem Hoarder', desc:'Collect 200 gems total', reward:800,
+          check: (s) => s.totalGems >= 200 },
+        { id:'unobtainium_1', name:'Legendary Find', desc:'Find your first Unobtainium', reward:1000,
+          check: (s) => s.unobtainiumFound >= 1 },
+        { id:'unobtainium_3', name:'Unobtainium Master', desc:'Find all 3 Unobtainium in a single run', reward:3000,
+          check: (s) => s.unobtainiumInRun >= 3 },
+        { id:'runs_5', name:'Persistent Digger', desc:'Complete 5 runs', reward:400,
+          check: (s) => s.runsCompleted >= 5 }
+    ];
+
+    // Given cumulative stats and a set/array of already-unlocked achievement ids,
+    // returns the list of achievement objects newly unlocked this evaluation.
+    function evaluateAchievements(stats, unlockedIds) {
+        const unlockedSet = new Set(unlockedIds || []);
+        const newlyUnlocked = [];
+        for (const a of ACHIEVEMENTS) {
+            if (unlockedSet.has(a.id)) continue;
+            if (a.check(stats)) newlyUnlocked.push(a);
+        }
+        return newlyUnlocked;
+    }
+
     return {
         TILES, GEM_TILES, BIOMES,
         getBiome,
@@ -147,9 +200,12 @@
         computeComboMultiplier, computeReward,
         pickTileForRoll,
         getDepthFuelMultiplier,
-        OUTPOST_KIT_COSTS, MAX_OUTPOSTS,
+        OUTPOST_KIT_COSTS, MAX_OUTPOSTS, OUTPOST_COOLDOWN_MS,
         canBuyOutpost, getOutpostKitCost, canPlaceOutpost,
+        canUseOutpost, getOutpostCooldownRemaining,
+        ACHIEVEMENTS, evaluateAchievements,
         FUEL_PER_MOVE, MAX_FUEL, MAX_HULL
 
     };
 });
+

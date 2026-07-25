@@ -92,11 +92,105 @@ canvas { background-color: #0a0a0a; box-shadow: 0 0 30px rgba(0,0,0,0.8); image-
 }
 #screen-flash.active { opacity: 1; }
 .shop-item.highlighted, .settings-row.highlighted { outline: 2px solid #f0c040; }
+.shop-item .item-values { font-size: 11px; color: #6fd68a; margin-bottom: 4px; }
+
+/* ── Retro Arcade Boot Screen ─────────────────────────────────────────────── */
+#boot-screen {
+    position: absolute; top:0; left:0; right:0; bottom:0; background:#000;
+    display:flex; flex-direction:column; align-items:center; justify-content:center;
+    z-index: 50; overflow:hidden; font-family: 'Courier New', monospace;
+}
+#boot-screen::before {
+    content:''; position:absolute; top:0; left:0; right:0; bottom:0; pointer-events:none;
+    background: repeating-linear-gradient(0deg, rgba(0,0,0,0.25) 0px, rgba(0,0,0,0.25) 1px, transparent 1px, transparent 3px);
+    animation: scanlineFlicker 6s infinite;
+}
+@keyframes scanlineFlicker { 0%,100% { opacity:0.9; } 50% { opacity:0.7; } 51% { opacity:0.95; } }
+#boot-logo {
+    font-size: 54px; font-weight: bold; letter-spacing: 4px; color: #ffcc00;
+    text-shadow: 0 0 6px #ffcc00, 0 0 16px #ff8800, 0 0 28px #ff4400, 3px 3px 0 #7a1a00;
+    animation: bootFlicker 2.4s infinite;
+    margin-bottom: 8px;
+}
+#boot-sub { color:#00e5ff; font-size:14px; letter-spacing:3px; text-shadow:0 0 8px #00e5ff; margin-bottom: 40px; }
+@keyframes bootFlicker { 0%,19%,21%,23%,80%,100% { opacity:1; } 20%,22%,79% { opacity:0.75; } }
+#boot-loadbar-container { width: 280px; height: 18px; border:2px solid #00e5ff; border-radius:3px; background:#001; box-shadow:0 0 10px #00e5ff; margin-bottom: 30px; }
+#boot-loadbar-fill { height:100%; width:0%; background: linear-gradient(90deg,#ff4400,#ffcc00,#00e5ff); transition: width 1.6s linear; }
+#boot-press-start { color:#fff; font-size:15px; letter-spacing:2px; animation: bootBlink 1s steps(1) infinite; }
+@keyframes bootBlink { 0%,49% { opacity:1; } 50%,100% { opacity:0; } }
+#boot-copyright { position:absolute; bottom:16px; font-size:10px; color:#4a6fa5; letter-spacing:2px; }
+
+/* ── Achievements ─────────────────────────────────────────────────────────── */
+#achievements-toggle {
+    position: absolute; top: 10px; right: 210px; background: rgba(0,0,0,0.7); border: 1px solid #4a6fa5;
+    color: white; font-size: 16px; padding: 8px 12px; border-radius: 8px; cursor: pointer; z-index: 10;
+}
+#achievements-overlay h2 { font-size: 28px; color: #f0c040; margin-bottom: 8px; }
+.ach-subtitle { font-size: 12px; color: #95a5a6; margin-bottom: 14px; }
+.ach-list { width: 90%; max-width: 500px; max-height: 340px; overflow-y: auto; margin-bottom: 16px; }
+.ach-row { display:flex; justify-content:space-between; align-items:center; padding: 8px 12px; background: rgba(255,255,255,0.05); border-radius: 6px; margin-bottom: 6px; }
+.ach-row.unlocked { background: rgba(46,204,113,0.12); border: 1px solid #2ecc71; }
+.ach-row .ach-name { font-size:13px; font-weight:bold; }
+.ach-row .ach-desc { font-size:11px; color:#95a5a6; }
+.ach-row .ach-reward { font-size:12px; color:#f0c040; }
+#achievement-toast {
+    position: absolute; top: 70px; left: 50%; transform: translateX(-50%) translateY(-20px);
+    background: rgba(20,25,35,0.95); border: 2px solid #f0c040; border-radius: 10px; padding: 12px 20px;
+    z-index: 40; opacity:0; transition: opacity 0.3s, transform 0.3s; text-align:center; pointer-events:none;
+}
+#achievement-toast.show { opacity:1; transform: translateX(-50%) translateY(0); }
+#achievement-toast .toast-title { color:#f0c040; font-weight:bold; font-size:13px; }
+#achievement-toast .toast-name { color:#fff; font-size:15px; margin-top:2px; }
+#achievement-toast .toast-reward { color:#2ecc71; font-size:12px; margin-top:2px; }
+
+/* ── Mobile / Portrait Adjustments ───────────────────────────────────────── */
+@media (max-width: 640px) {
+    #ui { min-width: 130px; padding: 6px 8px; font-size: 11px; max-width: 42vw; }
+    #ui h1 { font-size: 14px; margin-bottom: 4px; }
+    #ui .stat { font-size: 10px; margin: 2px 0; }
+    #ui .highscore { font-size: 9px; }
+    #ui .combo { font-size: 10px; min-height: 12px; }
+    #inventory { font-size: 9px; margin-top: 4px; max-width: 130px; }
+    .bar-container { height: 7px; margin-top: 3px; }
+    #sound-toggle, #lb-toggle, #settings-toggle, #help-toggle, #achievements-toggle {
+        font-size: 12px; padding: 5px 7px; top: 6px;
+    }
+    #sound-toggle { right: 6px; }
+    #lb-toggle { right: 44px; }
+    #settings-toggle { right: 82px; }
+    #achievements-toggle { right: 120px; }
+    #help-toggle { right: 158px; }
+    #controls-hint { display: none; }
+    #deploy-outpost-btn { bottom: 130px; font-size: 11px; padding: 8px 10px; }
+    #boot-logo { font-size: 32px; letter-spacing: 2px; }
+    #boot-loadbar-container { width: 200px; }
+}
+@media (max-width: 640px) and (orientation: portrait) {
+    #ui { top: 4px; left: 4px; }
+    #dpad { bottom: 20px; transform: translateX(-50%) scale(0.85); }
+}
 </style>
+
 
 </head>
 <body>
+
+<div id="boot-screen">
+    <div id="boot-logo">⛏ GEMDIGGER</div>
+    <div id="boot-sub">- ARCADE MINING SIMULATOR -</div>
+    <div id="boot-loadbar-container"><div id="boot-loadbar-fill"></div></div>
+    <div id="boot-press-start">PRESS START</div>
+    <div id="boot-copyright">© 1988-STYLE RETRO CO.</div>
+</div>
+
+<div id="achievement-toast">
+    <div class="toast-title">🏆 ACHIEVEMENT UNLOCKED</div>
+    <div class="toast-name" id="toast-name"></div>
+    <div class="toast-reward" id="toast-reward"></div>
+</div>
+
 <div id="ui">
+
     <h1>⛏ Digger</h1>
     <div class="stat">Score: <span id="score">0</span></div>
     <div class="highscore">Best: <span id="ui-highscore">0</span></div>
@@ -114,6 +208,8 @@ canvas { background-color: #0a0a0a; box-shadow: 0 0 30px rgba(0,0,0,0.8); image-
 <button id="lb-toggle">🏆</button>
 <button id="settings-toggle">⚙️</button>
 <button id="help-toggle" style="position:absolute; top:10px; right:160px; background: rgba(0,0,0,0.7); border: 1px solid #4a6fa5; color: white; font-size: 16px; padding: 8px 12px; border-radius: 8px; cursor: pointer; z-index: 10;">❓</button>
+<button id="achievements-toggle">🏅</button>
+
 <button id="deploy-outpost-btn" style="position:absolute; bottom:100px; right:20px; background: rgba(243,156,18,0.85); border: 1px solid #b9770e; color: white; font-size: 13px; padding: 10px 14px; border-radius: 8px; cursor: pointer; z-index: 15; display:none;">🚧 Deploy (E)</button>
 
 
@@ -172,7 +268,15 @@ canvas { background-color: #0a0a0a; box-shadow: 0 0 30px rgba(0,0,0,0.8); image-
     <button class="big-btn red" id="settings-close-btn">Close</button>
 </div>
 
+<div id="achievements-overlay" style="display:none; position:absolute; top:0; left:0; right:0; bottom:0; background: rgba(0,0,0,0.85); flex-direction: column; align-items: center; justify-content: center; z-index: 22;">
+    <h2>🏅 Achievements</h2>
+    <div class="ach-subtitle">Unlock milestones for permanent bonus score!</div>
+    <div class="ach-list" id="ach-list"></div>
+    <button class="big-btn red" id="achievements-close-btn">Close</button>
+</div>
+
 <div id="tutorial-overlay" style="display:none; position:absolute; top:0; left:0; right:0; bottom:0; background: rgba(0,0,0,0.88); flex-direction: column; align-items: center; justify-content: center; z-index: 30;">
+
     <div style="max-width:560px; width:90%; background:rgba(20,25,35,0.95); border:1px solid #4a6fa5; border-radius:12px; padding:24px 28px;">
         <h2 style="margin:0 0 12px 0; color:#f0c040; text-shadow:0 0 10px #f0c040;">⛏ Welcome to GemDigger!</h2>
         <ul style="font-size:14px; line-height:1.7; color:#dfe6e9; padding-left:20px; margin:0 0 18px 0;">
@@ -286,6 +390,73 @@ const COMBO_TIMER_MAX = 180; // 3s @ 60fps
 let soundEnabled = true;
 let unobtainiumFound = false;
 let carriedOutposts = 0, placedOutposts = 0, purchasedOutposts = 0;
+let outpostLastUsed = {}; // "x,y" -> timestamp ms
+let unobtainiumInRun = 0;
+
+// ── Persistent Player Stats & Achievements ──────────────────────────────────
+const STATS_KEY = 'gemdigger_stats';
+const ACH_KEY = 'gemdigger_achievements';
+let playerStats = { maxDepth:0, totalGems:0, unobtainiumFound:0, runsCompleted:0 };
+function loadStats() {
+    try { playerStats = Object.assign(playerStats, JSON.parse(localStorage.getItem(STATS_KEY)||'null')||{}); } catch(e) {}
+}
+function saveStats() { localStorage.setItem(STATS_KEY, JSON.stringify(playerStats)); }
+function getUnlockedAchievements() {
+    try { return JSON.parse(localStorage.getItem(ACH_KEY)||'[]'); } catch(e) { return []; }
+}
+function saveUnlockedAchievements(ids) { localStorage.setItem(ACH_KEY, JSON.stringify(ids)); }
+function checkAchievements() {
+    const unlocked = getUnlockedAchievements();
+    const stats = {
+        maxDepth: playerStats.maxDepth, totalGems: playerStats.totalGems,
+        unobtainiumFound: playerStats.unobtainiumFound, unobtainiumInRun,
+        runsCompleted: playerStats.runsCompleted
+    };
+    const newly = GameLogic.evaluateAchievements(stats, unlocked);
+    if (newly.length) {
+        for (const ach of newly) {
+            unlocked.push(ach.id);
+            score += ach.reward;
+            showAchievementToast(ach);
+        }
+        saveUnlockedAchievements(unlocked);
+    }
+}
+let toastQueue = [], toastShowing = false;
+function showAchievementToast(ach) {
+    toastQueue.push(ach);
+    if (!toastShowing) processToastQueue();
+}
+function processToastQueue() {
+    if (toastQueue.length === 0) { toastShowing = false; return; }
+    toastShowing = true;
+    const ach = toastQueue.shift();
+    const toastEl = document.getElementById('achievement-toast');
+    document.getElementById('toast-name').textContent = ach.name;
+    document.getElementById('toast-reward').textContent = `+${ach.reward} pts — ${ach.desc}`;
+    toastEl.classList.add('show');
+    sfxLegendary();
+    setTimeout(()=>{ toastEl.classList.remove('show'); setTimeout(processToastQueue, 400); }, 3200);
+}
+function renderAchievements() {
+    const unlocked = getUnlockedAchievements();
+    const listEl = document.getElementById('ach-list');
+    listEl.innerHTML = GameLogic.ACHIEVEMENTS.map(a=>{
+        const isUnlocked = unlocked.includes(a.id);
+        return `<div class="ach-row ${isUnlocked?'unlocked':''}">
+            <div><div class="ach-name">${isUnlocked?'✅':'🔒'} ${a.name}</div><div class="ach-desc">${a.desc}</div></div>
+            <div class="ach-reward">+${a.reward}</div>
+        </div>`;
+    }).join('');
+}
+document.getElementById('achievements-toggle').addEventListener('click', ()=>{
+    renderAchievements();
+    document.getElementById('achievements-overlay').style.display = 'flex';
+});
+document.getElementById('achievements-close-btn').addEventListener('click', ()=>{
+    document.getElementById('achievements-overlay').style.display = 'none';
+});
+
 
 
 // ── Settings ─────────────────────────────────────────────────────────────────
@@ -335,10 +506,12 @@ function init() {
     inventory = {}; gameOver = false; shopOpen = false; keys = {}; moveTimer = 0;
     comboCount = 0; comboMultiplier = 1; comboTimer = 0;
     unobtainiumFound = false;
+    unobtainiumInRun = 0;
     carriedOutposts = 0; placedOutposts = 0; purchasedOutposts = 0;
-
+    outpostLastUsed = {};
 
     const startX = Math.floor(GRID_WIDTH/2), startY = 2;
+
     player = {
         x:startX*TILE_SIZE, y:startY*TILE_SIZE, targetX:startX*TILE_SIZE, targetY:startY*TILE_SIZE,
         gridX:startX, gridY:startY, drillPower:getUpgradeValue('drillPower'), moving:false, facing:'down'
@@ -533,9 +706,15 @@ function tryMove(dx, dy) {
 
             if (targetTile === TILES.UNOBTAINIUM) {
                 unobtainiumFound = true;
+                unobtainiumInRun++;
+                playerStats.unobtainiumFound++;
                 sfxLegendary();
                 showFloatingText('LEGENDARY!!!', newGridX, newGridY-1, '#ffdd00');
             }
+            playerStats.totalGems++;
+            saveStats();
+            checkAchievements();
+
         } else {
             spawnParticles(newGridX, newGridY, targetTile===TILES.STONE?'#6b7280':'#8b4513', 6);
             sfxDig();
@@ -559,10 +738,19 @@ function tryMove(dx, dy) {
         }
 
         if (targetTile === TILES.OUTPOST) {
-            fuel = maxFuel; hull = maxHull;
-            showFloatingText('Outpost Refuel!', newGridX, newGridY, '#f39c12');
-            sfxFuel();
+            const key = newGridX+','+newGridY;
+            const lastUsed = outpostLastUsed[key];
+            if (GameLogic.canUseOutpost(lastUsed, Date.now())) {
+                fuel = maxFuel; hull = maxHull;
+                outpostLastUsed[key] = Date.now();
+                showFloatingText('Outpost Refuel!', newGridX, newGridY, '#f39c12');
+                sfxFuel();
+            } else {
+                const remainingS = Math.ceil(GameLogic.getOutpostCooldownRemaining(lastUsed, Date.now())/1000);
+                showFloatingText(`Cooling down (${remainingS}s)`, newGridX, newGridY, '#95a5a6');
+            }
         }
+
 
         if (targetTile === TILES.UNSTABLE) {
             grid[newGridY][newGridX] = TILES.EMPTY;
@@ -635,12 +823,19 @@ function renderShop() {
         const isMaxed = currentLevel >= upg.maxLevel;
         const cost = isMaxed ? 0 : upg.costs[currentLevel+1];
         const canAfford = !isMaxed && score >= cost;
+        const curVal = GameLogic.getUpgradeValue(upg.id, currentLevel);
+        const nextVal = isMaxed ? curVal : GameLogic.getUpgradeValue(upg.id, currentLevel+1);
+        const valuesHtml = isMaxed
+            ? `<div class="item-values">Current: ${curVal}</div>`
+            : `<div class="item-values">${curVal} → ${nextVal}</div>`;
         const div = document.createElement('div');
         div.className = 'shop-item' + ((!canAfford && !isMaxed) ? ' disabled' : '');
         div.innerHTML = `<span class="item-level">${isMaxed?'MAX':`Lv ${currentLevel}/${upg.maxLevel}`}</span>
             <div class="item-name">${upg.name}</div>
             <div class="item-desc">${upg.desc}</div>
+            ${valuesHtml}
             <div class="item-cost">${isMaxed?'✅ Maxed out':`Cost: ${cost} pts`}</div>`;
+
         if (canAfford) div.addEventListener('click', ()=>{ score-=cost; upgradeLevels[upg.id]++; sfxShop(); renderShop(); });
         gridEl.appendChild(div);
     }
@@ -714,6 +909,10 @@ function triggerGameOver(reason) {
     const totalGems = Object.values(inventory).reduce((a,b)=>a+b,0);
     const depthMeters = Math.max(0, player.gridY-2)*2;
     saveLeaderboardEntry({ score, depth: depthMeters, gems: totalGems, date: new Date().toISOString() });
+    playerStats.runsCompleted++;
+    saveStats();
+    checkAchievements();
+
 
     overlayTitle.textContent = reason === 'hull' ? '💥 Drill Destroyed!' : '⛽ Out of Fuel!';
     finalScoreEl.textContent = score;
@@ -734,6 +933,12 @@ function updateUI() {
     depthElement.textContent = depthMeters;
     const depthFrac = (player.gridY-2)/(GRID_HEIGHT-3);
     biomeNameEl.textContent = getBiome(Math.max(0,depthFrac)).name;
+    if (depthMeters > playerStats.maxDepth) {
+        playerStats.maxDepth = depthMeters;
+        saveStats();
+        checkAchievements();
+    }
+
 
     if (comboCount > 1) comboDisplay.textContent = `🔥 Combo x${comboCount} (${comboMultiplier.toFixed(1)}x)`;
     else comboDisplay.textContent = '';
@@ -1097,11 +1302,28 @@ document.getElementById('tutorial-close-btn').addEventListener('click', closeTut
 document.getElementById('help-toggle').addEventListener('click', openTutorial);
 if (!localStorage.getItem(TUTORIAL_KEY)) openTutorial();
 
+// ── Retro Boot Screen ────────────────────────────────────────────────────────
+const bootScreenEl = document.getElementById('boot-screen');
+const bootLoadbarFill = document.getElementById('boot-loadbar-fill');
+function dismissBootScreen() {
+    bootScreenEl.style.display = 'none';
+    window.removeEventListener('keydown', dismissBootScreen);
+    window.removeEventListener('mousedown', dismissBootScreen);
+    window.removeEventListener('touchstart', dismissBootScreen);
+}
+setTimeout(()=>{ bootLoadbarFill.style.width = '100%'; }, 50);
+setTimeout(dismissBootScreen, 3500);
+window.addEventListener('keydown', dismissBootScreen);
+window.addEventListener('mousedown', dismissBootScreen);
+window.addEventListener('touchstart', dismissBootScreen);
+
+loadStats();
 loadSettings();
 init();
 gameLoop();
 setInterval(updateMusicForBiome, 500);
 </script>
+
 
 
 </body>

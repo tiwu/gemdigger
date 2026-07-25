@@ -15,8 +15,10 @@ Open `index.html` in any modern browser — no server, no dependencies required.
 | 🔊 button (top right) | Toggle sound on/off |
 | 🏆 button (top right) | View leaderboard |
 | ⚙️ button (top right) | Open settings (D-pad visibility, SFX/music volume) |
+| 🏅 button (top right) | View achievements |
 | ❓ button (top right) | Reopen the tutorial/help modal |
 | E / 🚧 Deploy button | Deploy a carried Outpost Kit on your current tile |
+
 
 
 ### Objective
@@ -72,7 +74,9 @@ Fuel drain **scales with depth** — by the time you reach the Deep Core, round 
 - Buy up to **2 Outpost Kits** from the shop (increasing cost each time)
 - Carry a kit down and **deploy it** on any cleared (empty) tile using the **🚧 Deploy** button or the **E** key
 - Stepping onto a deployed Outpost fully refuels and repairs your drill instantly — no shop popup, just a quick pit-stop
+- Outposts are **reusable** — once you use one, it goes on a **25-second cooldown** before it can be used again, so you can rely on the same outpost for multiple round trips, but not spam it endlessly
 - Outposts are permanent for the rest of the run once placed
+
 
 
 ---
@@ -118,7 +122,26 @@ Visit the **🏠 Surface Base** to open the shop. Spend your score on 5 upgrade 
 
 ---
 
+## 🏅 Achievements
+
+Persistent, cross-run milestones tracked in `localStorage` (depth reached, total gems collected, Unobtainium found, runs completed). Unlocking one grants an instant one-time score bonus and shows an on-screen toast notification. View your progress any time via the 🏅 button.
+
+---
+
+## 📱 Mobile / Portrait Support
+
+On narrow screens (phones, portrait tablets) the HUD panel automatically shrinks and the top-right buttons compact into a tighter row so nothing overlaps the play field, and the D-Pad repositions/scales down for smaller viewports.
+
+---
+
+## 🕹️ Retro Boot Screen
+
+The game opens with a CRT-style arcade boot screen (scanline flicker, glowing pixel logo, animated loading bar, blinking "PRESS START") before dropping you into the tutorial/gameplay — press any key, click, or tap to skip ahead.
+
+---
+
 ## 🏆 Leaderboard
+
 
 Every completed run (score, depth reached, gems collected) is saved to a local top-10 leaderboard, stored in `localStorage`. View it any time via the 🏆 button, or from the Game Over screen. Your #1 run is marked with a 👑.
 
@@ -176,6 +199,7 @@ See [plan.md](plan.md) for the full development plan and progress log.
 - ✅ Phase 10 — Local Leaderboard
 - ✅ Phase 12 — Accessibility, Audio Settings & Background Music (settings overlay, procedural music, low-fuel/hull warnings, full keyboard navigation for overlays)
 - ✅ Phase 13 — Biome Distinction & Outposts (per-biome stone/dirt colors, gem rarity weighting, biome-specific ambient music, depth-scaled fuel drain, deployable Outposts, 3x Unobtainium, tutorial modal, extracted/tested pure game-logic module)
+- ✅ Phase 14 — UX Polish & Rebalance (retro arcade boot screen, mobile/portrait HUD fixes, reusable Outposts with cooldown, rebalanced hull-vs-fuel hazard frequency, shop before→after value display, persistent achievement system with rewards/notifications, improved shop clarity)
 
 
 
@@ -183,5 +207,5 @@ See [plan.md](plan.md) for the full development plan and progress log.
 - Drill skins / cosmetic unlocks
 - Additional biome-exclusive mechanics (ice slipperiness, magma updrafts)
 - Daily seed / shareable world codes
-- Achievements system
 - Global online leaderboard (requires backend)
+
