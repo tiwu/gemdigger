@@ -4,39 +4,47 @@ We want to create a browser-based mining game ("Digger" style) where they play a
 
 ## Implementation Plan
 
-I will create a single-file HTML/CSS/JS solution to ensure easy deployment and immediate usability.
+Single-file HTML/CSS/JS solution for easy deployment and immediate usability.
 
 ### Architecture
 
-- **Rendering**: HTML5 Canvas API for performance. A `requestAnimationFrame` loop will handle rendering at 60fps.
-- **Grid System**: A 2D array representing tiles. Each tile type defines its "drillability" (e.g., Dirt = 1, Stone = 3, Gem = 5).
-- **Player Logic**: The drill follows basic grid movement but interacts with the friction/resistance of different materials.
-- **Procedural Generation**: Depth-weighted random distribution — gem/hazard probability scales with Y depth.
+- **Rendering**: HTML5 Canvas API. `requestAnimationFrame` loop at 60fps, with viewport culling.
+- **Grid System**: 2D array of tiles across an 80×120 world. Each tile type defines drillability, rewards, and hazard behaviour.
+- **Player Logic**: Grid-based movement with smooth snap-to-tile animation.
+- **Procedural Generation**: Depth-weighted random distribution, further modulated by 5 distinct **biomes**.
+- **Audio**: Procedurally generated sound effects via Web Audio API (no external audio files).
+- **Particles**: Lightweight in-house particle system for dig/gem/hazard feedback.
+- **Persistence**: `localStorage` for high score + top-10 leaderboard.
 
 ### Key Features
 
-1. **Drilling**: Arrow keys (or on-screen D-Pad) to destroy adjacent tiles based on "drill power."
-2. **Gem Discovery**: Gold and Diamond spawn in deeper layers, giving points/score.
-3. **Inventory System**: Simple UI showing collected gem types, total score, and depth.
-4. **Fuel System**: Every move costs fuel. Manage fuel carefully or run out and lose.
-5. **Refuelling**: Fuel canisters scattered underground (+40 fuel). Surface base refuels to full.
-6. **Shop / Upgrades**: Return to base to spend score on drill upgrades.
-7. **Hazards**: Lava pockets (impassable, drain fuel on contact) and unstable rock (cave-ins).
-8. **Persistence**: High score saved to localStorage.
+1. **Drilling**: Arrow keys / on-screen D-Pad, destroy adjacent tiles based on drill power.
+2. **Gem Discovery**: Gold, Ruby, Emerald, Diamond, Sapphire — increasing rarity/value with depth. One unique **Unobtainium** exists per world.
+3. **Inventory & Scoring**: UI shows gems collected, score, depth, biome, combo.
+4. **Fuel & Hull**: Two resource bars — Fuel (movement cost) and Hull (damage from lava/cave-ins). Either reaching 0 ends the run.
+5. **Refuelling**: Fuel canisters + Surface Base (full refuel + shop access).
+6. **Shop / Upgrades**: 5 upgrade tracks — Drill Power, Move Speed, Fuel Efficiency, Fuel Tank, Hull Plating.
+7. **Hazards**: Lava (impassable, damages fuel+hull) and Unstable Rock (triggers cave-ins that can damage hull).
+8. **Combo System**: Consecutive gem hits build a score multiplier (up to 5x), reset by timeout, lava, or cave-in.
+9. **Biomes**: Surface → Cavern → Ice Layer → Magma Layer → Deep Core, each with distinct visuals and spawn rules.
+10. **Leaderboard**: Local top-10 run history (score, depth, gems) stored in `localStorage`.
 
 ### Critical Files
 
-- `index.html` (Contains everything: Styles, Game Logic, Canvas)
+- `index.html` — Contains everything: styles, game logic, canvas, audio, particles.
 
 ## Verification Plan
 
-1. **Visual Check**: Ensure the drill moves correctly and tiles change state from "solid" to "empty."
-2. **Collision Test**: Verify that the drill cannot pass through impassable walls (Bedrock, Lava) without digging.
-3. **Scoring**: Confirm gems are added to inventory when mined.
-4. **Fuel Loop**: Confirm fuel depletes, canisters refill, base refuels to full.
-5. **Shop**: Confirm upgrades apply correctly and cost is deducted from score.
-6. **Hazards**: Confirm lava drains fuel, unstable rock triggers cave-in.
-7. **Performance**: Verify 60fps on standard hardware (viewport culling implemented).
+1. **Visual Check**: Drill moves correctly, tiles change state from solid to empty.
+2. **Collision Test**: Drill cannot pass through Bedrock or Lava without appropriate handling.
+3. **Scoring**: Gems added to inventory + score with correct combo multiplier applied.
+4. **Fuel/Hull Loop**: Both resources deplete correctly; refuel/repair mechanics work; game over triggers on either reaching 0.
+5. **Shop**: All 5 upgrades apply correctly and deduct score.
+6. **Hazards**: Lava/cave-in damage both fuel and hull as expected.
+7. **Biomes**: Correct biome name & visual tint shown at each depth band.
+8. **Unobtainium**: Exactly one exists per generated world, found in Deep Core.
+9. **Leaderboard**: Entries persist across page reloads, sorted correctly, capped at 10.
+10. **Performance**: Verify 60fps with viewport culling on the larger 80×120 map.
 
 ---
 
@@ -46,68 +54,116 @@ I will create a single-file HTML/CSS/JS solution to ensure easy deployment and i
 
 ### Phase 1 — Core Foundation ✅
 - [x] Core Game Loop & Rendering (Canvas API, requestAnimationFrame)
-- [x] Grid System & Tile Types (Dirt, Stone, Gold, Diamond, Bedrock)
-- [x] Procedural Generation (Depth-weighted random distribution)
+- [x] Grid System & Tile Types
+- [x] Procedural Generation (depth-weighted random distribution)
 - [x] Basic Drill Mechanics (Power vs. Difficulty)
-- [x] Movement Smoothing (Decoupled axes and snap-to-grid logic)
-- [x] Camera Implementation (Dynamic centering on player, viewport culling)
+- [x] Movement Smoothing (snap-to-grid)
+- [x] Camera Implementation (dynamic centering, viewport culling)
 
 ### Phase 2 — Gameplay Loop ✅
-- [x] **Bug Fix**: Fixed broken `TILES.GEM` reference — Gold/Diamond now generate and are collectible
-- [x] Fuel System (depletes per move, extra cost for Stone)
-- [x] Game Over screen (Out of Fuel) with final score + gem summary
-- [x] Restart mechanic
-- [x] Depth-based generation (gems/hazards scale with Y depth)
-- [x] Fuel Canisters (⛽ pickup tiles, +40 fuel)
-- [x] Surface Base (🏠 permanent tile, refuels to full + opens shop)
+- [x] Bug Fix: Gold/Diamond generation & mining
+- [x] Fuel System + Game Over + Restart
+- [x] Depth-based generation (gems/hazards scale with Y)
+- [x] Fuel Canisters + Surface Base (refuel)
 
 ### Phase 3 — Progression & Hazards ✅
-- [x] Shop / Upgrade System (opens on base visit)
-  - ⚙️ Drill Power (Lv 0–4)
-  - 🚀 Move Speed (Lv 0–3)
-  - ⛽ Fuel Efficiency (Lv 0–3)
-  - 🛢️ Fuel Tank capacity (Lv 0–3)
-- [x] Lava Hazard (🌋 impassable, -30 fuel on contact, animated glow)
-- [x] Unstable Rock Hazard (cracked visual, triggers cave-in on dig)
+- [x] Shop / Upgrade System (Drill Power, Move Speed, Fuel Efficiency, Fuel Tank)
+- [x] Lava Hazard
+- [x] Unstable Rock / Cave-in Hazard
 
-### Phase 4 — Polish ✅
-- [x] localStorage High Score (persists between sessions, "New High Score!" banner)
-- [x] Mobile D-Pad (on-screen buttons, touch + hold-to-repeat)
-- [x] Floating text notifications (+Fuel, Cave-in!, gem scores, Refuelled!)
-- [x] Drill rotation (faces direction of movement)
-- [x] Gem glow animation (pulsing inner glow for Gold/Diamond)
-- [x] Depth meter in UI
+### Phase 4 — Polish (v1) ✅
+- [x] localStorage High Score
+- [x] Mobile D-Pad
+- [x] Floating text notifications
+- [x] Drill rotation + gem glow animation
+- [x] Depth meter
+
+### Phase 5 — World Expansion & Biomes ✅
+- [x] Map expanded 50×60 → **80×120** (up to 236m depth)
+- [x] 5 procedural biomes: Surface, Cavern, Ice Layer, Magma Layer, Deep Core
+- [x] Per-biome background color + tint overlay
+- [x] Biome name shown in UI next to depth
+
+### Phase 6 — New Gems & Unobtainium ✅
+- [x] Ruby (+100, Ice Layer+)
+- [x] Emerald (+150, Magma Layer+)
+- [x] Sapphire (+300, Deep Core)
+- [x] **Unobtainium** — exactly 1 per world, Deep Core only, +5000 score, rainbow pulse animation, "LEGENDARY!!!" popup + fanfare sound
+
+### Phase 7 — Combo/Streak System ✅
+- [x] Consecutive gem hits build multiplier (1x → 5x cap, +0.5x per hit)
+- [x] 3-second combo timer, resets on timeout
+- [x] Combo resets on lava hit, cave-in, or moving through empty tiles
+- [x] UI combo counter + floating "+100 (2x)" style feedback
+
+### Phase 8 — Hull / Damage System ✅
+- [x] Separate Hull Integrity stat (100 base, upgradeable)
+- [x] Lava damages both fuel AND hull
+- [x] Cave-ins damage hull if player caught in collapse radius
+- [x] Hull reaching 0 → "💥 Drill Destroyed!" game over (distinct from fuel-out)
+- [x] 🛡️ Hull Plating upgrade (increases max hull, reduces damage taken up to 45%)
+- [x] Hull bar added to UI next to fuel bar
+
+### Phase 9 — Audio & Particles ✅
+- [x] Procedural sound effects via Web Audio API (dig, gem — pitch scales with rarity, fuel pickup, lava, cave-in, legendary fanfare, shop purchase)
+- [x] Mute/unmute toggle button (🔊/🔇)
+- [x] Lightweight particle system: dig chips, gem sparkle bursts, lava embers, cave-in dust
+
+### Phase 10 — Leaderboard ✅
+- [x] Local top-10 leaderboard (score, depth reached, gems found) via localStorage
+- [x] Accessible via 🏆 button in UI and from Game Over screen
+- [x] Sorted descending by score, crown icon on #1
+
+### Phase 11 — Documentation ✅
+- [x] plan.md updated with all new milestones
+- [x] README.md updated with new tiles, biomes, hull system, audio/particles, leaderboard
 
 ## Tile Reference
 
-| Tile       | Symbol | Behaviour |
-|------------|--------|-----------|
-| Empty      | —      | Passable, already dug |
-| Dirt       | Brown  | Drillable (toughness 1) |
-| Stone      | Grey   | Drillable (toughness 3), extra fuel cost |
-| Gold       | 🟡     | Drillable, +50 score |
-| Diamond    | 🔵     | Drillable, +200 score (deep only) |
-| Bedrock    | Dark   | Impassable border |
-| Fuel       | ⛽     | Drillable, +40 fuel |
-| Base       | 🏠     | Permanent, refuel + shop |
-| Lava       | 🌋     | Impassable, -30 fuel on contact |
-| Unstable   | Cracked| Drillable, triggers cave-in |
+| Tile        | Symbol | Behaviour |
+|-------------|--------|-----------|
+| Empty       | —      | Passable, already dug |
+| Dirt        | Brown  | Drillable (toughness 1) |
+| Stone       | Grey   | Drillable (toughness 3), extra fuel cost |
+| Gold        | 🟡     | +50 score |
+| Ruby        | 🔴     | +100 score (Ice Layer+) |
+| Emerald     | 🟢     | +150 score (Magma Layer+) |
+| Diamond     | 🔵     | +200 score (deep) |
+| Sapphire    | 🔷     | +300 score (Deep Core) |
+| **Unobtainium** | ✨ | **+5000 score, 1x per world**, Deep Core only |
+| Bedrock     | Dark   | Impassable border |
+| Fuel        | ⛽     | +40 fuel |
+| Base        | 🏠     | Permanent, refuel + shop |
+| Lava        | 🌋     | Impassable, -30 fuel / -hull on contact |
+| Unstable    | Cracked| Triggers cave-in, may damage hull |
+
+## Biome Reference
+
+| Biome | Depth Range | Notes |
+|-------|-------------|-------|
+| Surface | 0–8% | Base station, mostly Dirt |
+| Cavern | 8–35% | Gold appears, standard mix |
+| Ice Layer | 35–55% | Blue tint, Ruby appears |
+| Magma Layer | 55–78% | Red tint, more Lava, Emerald appears |
+| Deep Core | 78–100% | Purple-black tint, Diamond/Sapphire/Unobtainium |
 
 ## Technical Notes & Adaptations
 
-- **Movement**: Implemented a "snap" mechanism during movement to ensure the drill aligns perfectly with tile boundaries, improving collision detection for gems.
-- **Rendering**: Viewport culling — only visible tiles are drawn each frame for performance.
-- **Camera**: Clamped camera offset prevents rendering outside world bounds.
-- **Game Loop**: Standardized on a single update/draw pass within `requestAnimationFrame` for consistent performance. Game loop pauses when shop is open.
-- **Fuel Efficiency upgrade**: Uses `getUpgradeValue()` at move-time so upgrades apply immediately after shop close.
-- **Cave-in**: Uses `setTimeout` to collapse tiles 500ms after digging unstable rock, giving the player a moment to move clear.
+- **Movement**: Snap mechanism ensures drill aligns to tile boundaries.
+- **Rendering**: Viewport culling — only visible tiles drawn per frame; essential for the larger 80×120 map.
+- **Camera**: Clamped offset prevents rendering outside world bounds.
+- **Game Loop**: Pauses when shop is open; single update/draw pass per frame.
+- **Combo**: Tracked via `comboCount`/`comboMultiplier`/`comboTimer`; broken by empty-tile movement, lava, or cave-in.
+- **Hull damage reduction**: `getHullDamageReduction()` scales with Hull Plating level (up to 45% reduction at max level).
+- **Unobtainium placement**: Randomly placed once, post-generation, within the Deep Core Y-range, retried up to 500 times to avoid bedrock/base collisions.
+- **Sound**: All effects are synthesized oscillator beeps — no audio assets needed, keeps the single-file architecture intact.
+- **Particles**: Simple array-based system with gravity (`vy += 0.15`) and alpha fade-out tied to `life`.
+- **Leaderboard**: Stored as a sorted JSON array in `localStorage`, capped at the top 10 entries by score.
 
 ## Potential Future Features
 
-- [ ] More gem types (Ruby, Emerald, Sapphire) with unique effects
-- [ ] Drill health / damage system (lava damages drill, not just fuel)
-- [ ] Deeper map with procedural "biomes" (ice layer, magma layer)
-- [ ] Sound effects (Web Audio API)
-- [ ] Particle effects on tile destruction
-- [ ] Combo/streak scoring multiplier
-- [ ] Leaderboard (server-side or via URL sharing)
+- [ ] Drill skins / cosmetic unlocks
+- [ ] Additional biome-exclusive mechanics (ice slipperiness, magma updrafts)
+- [ ] Daily seed / shareable world codes
+- [ ] Achievements system
+- [ ] Global online leaderboard (requires backend)

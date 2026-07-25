@@ -1,1032 +1,793 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Digger - Gem Hunt</title>
-    <style>
-        * { box-sizing: border-box; }
-        body {
-            margin: 0;
-            padding: 0;
-            background-color: #1a252f;
-            color: white;
-            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
-            display: flex;
-            flex-direction: column;
-            align-items: center;
-            justify-content: center;
-            height: 100vh;
-            overflow: hidden;
-        }
-
-        #ui {
-            position: absolute;
-            top: 10px;
-            left: 10px;
-            background: rgba(0, 0, 0, 0.7);
-            padding: 12px 16px;
-            border-radius: 8px;
-            border: 1px solid #4a6fa5;
-            min-width: 180px;
-            z-index: 10;
-        }
-
-        #ui h1 {
-            margin: 0 0 8px 0;
-            font-size: 20px;
-            color: #f0c040;
-            text-shadow: 0 0 8px #f0c040;
-        }
-        #ui .highscore {
-            font-size: 11px;
-            color: #7f8c8d;
-            margin-top: 2px;
-        }
-
-        #ui .stat {
-            font-size: 13px;
-            margin: 3px 0;
-        }
-
-        #fuel-bar-container {
-            margin-top: 6px;
-            background: #333;
-            border-radius: 4px;
-            height: 10px;
-            width: 100%;
-            border: 1px solid #555;
-        }
-
-        #fuel-bar {
-            height: 100%;
-            background: linear-gradient(90deg, #e74c3c, #f39c12, #2ecc71);
-            border-radius: 4px;
-            transition: width 0.1s;
-        }
-
-        #inventory {
-            margin-top: 8px;
-            font-size: 12px;
-            color: #bdc3c7;
-            max-width: 200px;
-            word-wrap: break-word;
-        }
-
-        canvas {
-            background-color: #0a0a0a;
-            box-shadow: 0 0 30px rgba(0,0,0,0.8);
-            image-rendering: pixelated;
-        }
-
-        /* Game Over Overlay */
-        #overlay {
-            display: none;
-            position: absolute;
-            top: 0; left: 0; right: 0; bottom: 0;
-            background: rgba(0,0,0,0.8);
-            flex-direction: column;
-            align-items: center;
-            justify-content: center;
-            z-index: 20;
-        }
-
-        #overlay.visible {
-            display: flex;
-        }
-
-        #overlay h2 {
-            font-size: 48px;
-            color: #e74c3c;
-            text-shadow: 0 0 20px #e74c3c;
-            margin: 0 0 10px 0;
-        }
-
-        #overlay .final-score {
-            font-size: 24px;
-            color: #f0c040;
-            margin-bottom: 20px;
-        }
-
-        #overlay .gems-found {
-            font-size: 16px;
-            color: #bdc3c7;
-            margin-bottom: 30px;
-        }
-
-        #restart-btn {
-            padding: 14px 36px;
-            font-size: 18px;
-            background: #27ae60;
-            color: white;
-            border: none;
-            border-radius: 8px;
-            cursor: pointer;
-            transition: background 0.2s, transform 0.1s;
-        }
-
-        #restart-btn:hover {
-            background: #2ecc71;
-            transform: scale(1.05);
-        }
-
-        #restart-btn:active {
-            transform: scale(0.97);
-        }
-
-        #controls-hint {
-            position: absolute;
-            bottom: 10px;
-            right: 10px;
-            background: rgba(0,0,0,0.6);
-            padding: 8px 12px;
-            border-radius: 6px;
-            font-size: 11px;
-            color: #7f8c8d;
-            z-index: 10;
-        }
-
-        /* Shop Overlay */
-        #shop-overlay {
-            display: none;
-            position: absolute;
-            top: 0; left: 0; right: 0; bottom: 0;
-            background: rgba(0,0,0,0.85);
-            flex-direction: column;
-            align-items: center;
-            justify-content: center;
-            z-index: 20;
-        }
-        #shop-overlay.visible { display: flex; }
-        #shop-overlay h2 {
-            font-size: 32px;
-            color: #f0c040;
-            text-shadow: 0 0 10px #f0c040;
-            margin: 0 0 6px 0;
-        }
-        #shop-overlay .shop-subtitle {
-            font-size: 14px;
-            color: #95a5a6;
-            margin-bottom: 20px;
-        }
-        .shop-grid {
-            display: grid;
-            grid-template-columns: repeat(2, 1fr);
-            gap: 12px;
-            max-width: 520px;
-            width: 100%;
-            padding: 0 20px;
-        }
-        .shop-item {
-            background: rgba(255,255,255,0.07);
-            border: 1px solid #4a6fa5;
-            border-radius: 8px;
-            padding: 14px;
-            cursor: pointer;
-            transition: background 0.15s, border-color 0.15s;
-        }
-        .shop-item:hover:not(.disabled) {
-            background: rgba(255,255,255,0.14);
-            border-color: #f0c040;
-        }
-        .shop-item.disabled {
-            opacity: 0.4;
-            cursor: not-allowed;
-        }
-        .shop-item .item-name {
-            font-size: 15px;
-            font-weight: bold;
-            color: #ecf0f1;
-        }
-        .shop-item .item-desc {
-            font-size: 12px;
-            color: #95a5a6;
-            margin: 4px 0 8px 0;
-        }
-        .shop-item .item-cost {
-            font-size: 13px;
-            color: #f0c040;
-        }
-        .shop-item .item-level {
-            font-size: 11px;
-            color: #7f8c8d;
-            float: right;
-        }
-        #shop-close-btn {
-            margin-top: 20px;
-            padding: 10px 30px;
-            font-size: 15px;
-            background: #c0392b;
-            color: white;
-            border: none;
-            border-radius: 6px;
-            cursor: pointer;
-            transition: background 0.2s;
-        }
-        #shop-close-btn:hover { background: #e74c3c; }
-        #shop-score-display {
-            font-size: 16px;
-            color: #f0c040;
-            margin-bottom: 16px;
-        }
-    </style>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Digger - Gem Hunt</title>
+<style>
+* { box-sizing: border-box; }
+body {
+    margin: 0; padding: 0; background-color: #1a252f; color: white;
+    font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+    display: flex; flex-direction: column; align-items: center; justify-content: center;
+    height: 100vh; overflow: hidden;
+}
+#ui {
+    position: absolute; top: 10px; left: 10px; background: rgba(0,0,0,0.7);
+    padding: 12px 16px; border-radius: 8px; border: 1px solid #4a6fa5; min-width: 190px; z-index: 10;
+}
+#ui h1 { margin: 0 0 8px 0; font-size: 20px; color: #f0c040; text-shadow: 0 0 8px #f0c040; }
+#ui .highscore { font-size: 11px; color: #7f8c8d; margin-top: 2px; }
+#ui .stat { font-size: 13px; margin: 3px 0; }
+#ui .combo { font-size: 13px; margin: 3px 0; color: #ff8c00; font-weight: bold; min-height: 16px; }
+.bar-container { margin-top: 6px; background: #333; border-radius: 4px; height: 10px; width: 100%; border: 1px solid #555; }
+.bar-fill { height: 100%; border-radius: 4px; transition: width 0.1s; }
+#fuel-bar { background: linear-gradient(90deg,#e74c3c,#f39c12,#2ecc71); }
+#hull-bar { background: linear-gradient(90deg,#7f1d1d,#c0392b); }
+#inventory { margin-top: 8px; font-size: 12px; color: #bdc3c7; max-width: 210px; word-wrap: break-word; }
+canvas { background-color: #0a0a0a; box-shadow: 0 0 30px rgba(0,0,0,0.8); image-rendering: pixelated; }
+#overlay, #shop-overlay, #leaderboard-overlay {
+    display: none; position: absolute; top:0; left:0; right:0; bottom:0; background: rgba(0,0,0,0.85);
+    flex-direction: column; align-items: center; justify-content: center; z-index: 20;
+}
+#overlay.visible, #shop-overlay.visible, #leaderboard-overlay.visible { display: flex; }
+#overlay h2 { font-size: 44px; color: #e74c3c; text-shadow: 0 0 20px #e74c3c; margin: 0 0 10px 0; }
+#overlay .final-score { font-size: 24px; color: #f0c040; margin-bottom: 10px; }
+#overlay .gems-found { font-size: 15px; color: #bdc3c7; margin-bottom: 20px; text-align:center; max-width:500px; }
+.big-btn {
+    padding: 12px 30px; font-size: 16px; background: #27ae60; color: white; border: none;
+    border-radius: 8px; cursor: pointer; transition: background 0.2s, transform 0.1s; margin: 6px;
+}
+.big-btn:hover { background: #2ecc71; transform: scale(1.05); }
+.big-btn:active { transform: scale(0.97); }
+.big-btn.red { background: #c0392b; } .big-btn.red:hover { background: #e74c3c; }
+#controls-hint {
+    position: absolute; bottom: 10px; right: 10px; background: rgba(0,0,0,0.6); padding: 8px 12px;
+    border-radius: 6px; font-size: 10px; color: #7f8c8d; z-index: 10; max-width: 260px; text-align:right;
+}
+#shop-overlay h2 { font-size: 30px; color: #f0c040; text-shadow: 0 0 10px #f0c040; margin: 0 0 6px 0; }
+.shop-subtitle { font-size: 14px; color: #95a5a6; margin-bottom: 16px; }
+.shop-grid { display: grid; grid-template-columns: repeat(2, 1fr); gap: 12px; max-width: 560px; width: 100%; padding: 0 20px; }
+.shop-item { background: rgba(255,255,255,0.07); border: 1px solid #4a6fa5; border-radius: 8px; padding: 12px; cursor: pointer; transition: background .15s, border-color .15s; }
+.shop-item:hover:not(.disabled) { background: rgba(255,255,255,0.14); border-color: #f0c040; }
+.shop-item.disabled { opacity: 0.4; cursor: not-allowed; }
+.shop-item .item-name { font-size: 14px; font-weight: bold; color: #ecf0f1; }
+.shop-item .item-desc { font-size: 11px; color: #95a5a6; margin: 4px 0 8px 0; }
+.shop-item .item-cost { font-size: 12px; color: #f0c040; }
+.shop-item .item-level { font-size: 11px; color: #7f8c8d; float: right; }
+#shop-score-display { font-size: 16px; color: #f0c040; margin-bottom: 14px; }
+#leaderboard-overlay h2 { font-size: 28px; color: #f0c040; margin-bottom: 14px; }
+#leaderboard-list { width: 90%; max-width: 500px; max-height: 300px; overflow-y: auto; margin-bottom: 16px; }
+.lb-row { display: flex; justify-content: space-between; padding: 6px 12px; background: rgba(255,255,255,0.05); border-radius: 6px; margin-bottom: 4px; font-size: 13px; }
+.lb-row.top1 { color: #f0c040; font-weight: bold; }
+#dpad {
+    position: absolute; bottom: 40px; left: 50%; transform: translateX(-50%); display: grid;
+    grid-template-columns: 50px 50px 50px; grid-template-rows: 50px 50px 50px; gap: 4px; z-index: 15; user-select: none;
+}
+#dpad button { background: rgba(255,255,255,0.15); border: 1px solid rgba(255,255,255,0.3); border-radius: 8px; color: white; font-size: 20px; cursor: pointer; display:flex; align-items:center; justify-content:center; }
+#sound-toggle {
+    position: absolute; top: 10px; right: 10px; background: rgba(0,0,0,0.7); border: 1px solid #4a6fa5;
+    color: white; font-size: 18px; padding: 8px 12px; border-radius: 8px; cursor: pointer; z-index: 10;
+}
+#lb-toggle {
+    position: absolute; top: 10px; right: 60px; background: rgba(0,0,0,0.7); border: 1px solid #4a6fa5;
+    color: white; font-size: 16px; padding: 8px 12px; border-radius: 8px; cursor: pointer; z-index: 10;
+}
+</style>
 </head>
 <body>
-    <div id="ui">
-        <h1>⛏ Digger</h1>
-        <div class="stat">Score: <span id="score">0</span></div>
-        <div class="highscore">Best: <span id="ui-highscore">0</span></div>
-        <div class="stat">Depth: <span id="depth">0</span>m</div>
-        <div class="stat">Fuel:</div>
-        <div id="fuel-bar-container">
-            <div id="fuel-bar" style="width:100%"></div>
-        </div>
-        <div id="inventory">Gems: None</div>
+<div id="ui">
+    <h1>⛏ Digger</h1>
+    <div class="stat">Score: <span id="score">0</span></div>
+    <div class="highscore">Best: <span id="ui-highscore">0</span></div>
+    <div class="stat">Depth: <span id="depth">0</span>m <span id="biome-name" style="color:#7f8c8d;font-size:11px;"></span></div>
+    <div class="combo" id="combo-display"></div>
+    <div class="stat">Fuel:</div>
+    <div class="bar-container"><div id="fuel-bar" class="bar-fill" style="width:100%"></div></div>
+    <div class="stat">Hull:</div>
+    <div class="bar-container"><div id="hull-bar" class="bar-fill" style="width:100%"></div></div>
+    <div id="inventory">Gems: None</div>
+</div>
+
+<button id="sound-toggle">🔊</button>
+<button id="lb-toggle">🏆</button>
+
+<canvas id="gameCanvas"></canvas>
+
+<div id="overlay">
+    <h2 id="overlay-title">⛽ Out of Fuel!</h2>
+    <div class="final-score">Final Score: <span id="final-score">0</span></div>
+    <div id="high-score-display" style="font-size:15px;color:#95a5a6;margin-bottom:8px;"></div>
+    <div class="gems-found" id="gems-found"></div>
+    <div>
+        <button class="big-btn" id="restart-btn">⛏ Dig Again</button>
+        <button class="big-btn red" id="overlay-lb-btn">🏆 Leaderboard</button>
     </div>
+</div>
 
-    <canvas id="gameCanvas"></canvas>
+<div id="controls-hint">Arrow Keys / D-Pad &nbsp;|&nbsp; ⛽ Fuel &nbsp;|&nbsp; 🏠 Base &nbsp;|&nbsp; 🌋 Lava &nbsp;|&nbsp; 💎 Combo gems fast!</div>
 
-    <div id="overlay">
-        <h2>⛽ Out of Fuel!</h2>
-        <div class="final-score">Final Score: <span id="final-score">0</span></div>
-        <div id="high-score-display" style="font-size:15px;color:#95a5a6;margin-bottom:8px;"></div>
-        <div class="gems-found" id="gems-found"></div>
-        <button id="restart-btn">⛏ Dig Again</button>
-    </div>
+<div id="dpad">
+    <div></div><button id="dpad-up">▲</button><div></div>
+    <button id="dpad-left">◀</button><div style="background:rgba(255,255,255,0.05);border-radius:8px;"></div><button id="dpad-right">▶</button>
+    <div></div><button id="dpad-down">▼</button><div></div>
+</div>
 
-    <div id="controls-hint">Arrow Keys / D-Pad &nbsp;|&nbsp; ⛽ = Fuel &nbsp;|&nbsp; 🏠 = Base &nbsp;|&nbsp; 🌋 = Lava (avoid!)</div>
+<div id="shop-overlay">
+    <h2>🏠 Surface Base</h2>
+    <div class="shop-subtitle">Spend your score to upgrade your drill!</div>
+    <div id="shop-score-display">Score: <span id="shop-score">0</span></div>
+    <div class="shop-grid" id="shop-grid"></div>
+    <button class="big-btn red" id="shop-close-btn">⛏ Back to Digging</button>
+</div>
 
-    <!-- Mobile D-Pad -->
-    <div id="dpad" style="position:absolute;bottom:40px;left:50%;transform:translateX(-50%);display:grid;grid-template-columns:50px 50px 50px;grid-template-rows:50px 50px 50px;gap:4px;z-index:15;user-select:none;">
-        <div></div>
-        <button id="dpad-up" style="background:rgba(255,255,255,0.15);border:1px solid rgba(255,255,255,0.3);border-radius:8px;color:white;font-size:20px;cursor:pointer;display:flex;align-items:center;justify-content:center;">▲</button>
-        <div></div>
-        <button id="dpad-left" style="background:rgba(255,255,255,0.15);border:1px solid rgba(255,255,255,0.3);border-radius:8px;color:white;font-size:20px;cursor:pointer;display:flex;align-items:center;justify-content:center;">◀</button>
-        <div style="background:rgba(255,255,255,0.05);border-radius:8px;"></div>
-        <button id="dpad-right" style="background:rgba(255,255,255,0.15);border:1px solid rgba(255,255,255,0.3);border-radius:8px;color:white;font-size:20px;cursor:pointer;display:flex;align-items:center;justify-content:center;">▶</button>
-        <div></div>
-        <button id="dpad-down" style="background:rgba(255,255,255,0.15);border:1px solid rgba(255,255,255,0.3);border-radius:8px;color:white;font-size:20px;cursor:pointer;display:flex;align-items:center;justify-content:center;">▼</button>
-        <div></div>
-    </div>
+<div id="leaderboard-overlay">
+    <h2>🏆 Leaderboard — Top Runs</h2>
+    <div id="leaderboard-list"></div>
+    <button class="big-btn red" id="lb-close-btn">Close</button>
+</div>
 
-    <!-- Shop Overlay -->
-    <div id="shop-overlay">
-        <h2>🏠 Surface Base</h2>
-        <div class="shop-subtitle">Spend your score to upgrade your drill!</div>
-        <div id="shop-score-display">Score: <span id="shop-score">0</span></div>
-        <div class="shop-grid" id="shop-grid"></div>
-        <button id="shop-close-btn">⛏ Back to Digging</button>
-    </div>
+<script>
+const canvas = document.getElementById('gameCanvas');
+const ctx = canvas.getContext('2d');
+const scoreElement = document.getElementById('score');
+const depthElement = document.getElementById('depth');
+const biomeNameEl = document.getElementById('biome-name');
+const comboDisplay = document.getElementById('combo-display');
+const inventoryElement = document.getElementById('inventory');
+const fuelBar = document.getElementById('fuel-bar');
+const hullBar = document.getElementById('hull-bar');
+const overlay = document.getElementById('overlay');
+const overlayTitle = document.getElementById('overlay-title');
+const finalScoreEl = document.getElementById('final-score');
+const gemsFoundEl = document.getElementById('gems-found');
+const restartBtn = document.getElementById('restart-btn');
+const shopOverlayEl = document.getElementById('shop-overlay');
+const lbOverlayEl = document.getElementById('leaderboard-overlay');
 
-    <script>
-        const canvas = document.getElementById('gameCanvas');
-        const ctx = canvas.getContext('2d');
-        const scoreElement = document.getElementById('score');
-        const depthElement = document.getElementById('depth');
-        const inventoryElement = document.getElementById('inventory');
-        const fuelBar = document.getElementById('fuel-bar');
-        const overlay = document.getElementById('overlay');
-        const finalScoreEl = document.getElementById('final-score');
-        const gemsFoundEl = document.getElementById('gems-found');
-        const restartBtn = document.getElementById('restart-btn');
+// ── Configuration ──────────────────────────────────────────────────────────
+const TILE_SIZE = 40;
+const GRID_WIDTH = 80;
+const GRID_HEIGHT = 120;
+const VIEW_TILES_X = 20, VIEW_TILES_Y = 15;
+canvas.width = VIEW_TILES_X * TILE_SIZE;
+canvas.height = VIEW_TILES_Y * TILE_SIZE;
 
-        // Configuration
-        const TILE_SIZE = 40;
-        const GRID_WIDTH = 50;
-        const GRID_HEIGHT = 60;
+const TILES = {
+    EMPTY:0, DIRT:1, STONE:2, GOLD:3, DIAMOND:4, BEDROCK:5, FUEL:6, BASE:7,
+    LAVA:8, UNSTABLE:9, RUBY:10, EMERALD:11, SAPPHIRE:12, UNOBTAINIUM:13
+};
 
-        // Canvas size = viewport (camera scrolls)
-        const VIEW_TILES_X = 20;
-        const VIEW_TILES_Y = 15;
-        canvas.width = VIEW_TILES_X * TILE_SIZE;
-        canvas.height = VIEW_TILES_Y * TILE_SIZE;
+const TILE_COLORS = {
+    [TILES.EMPTY]:'#111', [TILES.DIRT]:'#8b4513', [TILES.STONE]:'#6b7280',
+    [TILES.GOLD]:'#ffd700', [TILES.DIAMOND]:'#00e5ff', [TILES.BEDROCK]:'#2d2d2d',
+    [TILES.FUEL]:'#e67e22', [TILES.BASE]:'#27ae60', [TILES.LAVA]:'#c0392b',
+    [TILES.UNSTABLE]:'#a0522d', [TILES.RUBY]:'#e0115f', [TILES.EMERALD]:'#50c878',
+    [TILES.SAPPHIRE]:'#0f52ba', [TILES.UNOBTAINIUM]:'#ffffff'
+};
+const TILE_BORDER_COLORS = {
+    [TILES.EMPTY]:'#111', [TILES.DIRT]:'#6b3410', [TILES.STONE]:'#4b5563',
+    [TILES.GOLD]:'#b8960a', [TILES.DIAMOND]:'#0099aa', [TILES.BEDROCK]:'#1a1a1a',
+    [TILES.FUEL]:'#a04010', [TILES.BASE]:'#1a7a40', [TILES.LAVA]:'#7b0000',
+    [TILES.UNSTABLE]:'#6b3010', [TILES.RUBY]:'#8a0a3c', [TILES.EMERALD]:'#2e8b4f',
+    [TILES.SAPPHIRE]:'#0a2f6e', [TILES.UNOBTAINIUM]:'#888'
+};
 
-        // Tile Types
-        const TILES = {
-            EMPTY:   0,
-            DIRT:    1,
-            STONE:   2,
-            GOLD:    3,
-            DIAMOND: 4,
-            BEDROCK: 5,
-            FUEL:    6,   // Fuel canister pickup
-            BASE:    7,   // Surface base (refuel station)
-            LAVA:    8,   // Hazard: damages drill
-            UNSTABLE:9    // Hazard: collapses after being dug nearby
-        };
+const GEM_REWARDS = {
+    [TILES.GOLD]:50, [TILES.DIAMOND]:200, [TILES.RUBY]:100, [TILES.EMERALD]:150,
+    [TILES.SAPPHIRE]:300, [TILES.UNOBTAINIUM]:5000
+};
+const GEM_NAMES = {
+    [TILES.GOLD]:'Gold', [TILES.DIAMOND]:'Diamond', [TILES.RUBY]:'Ruby',
+    [TILES.EMERALD]:'Emerald', [TILES.SAPPHIRE]:'Sapphire', [TILES.UNOBTAINIUM]:'Unobtainium'
+};
 
-        const TILE_COLORS = {
-            [TILES.EMPTY]:    '#111',
-            [TILES.DIRT]:     '#8b4513',
-            [TILES.STONE]:    '#6b7280',
-            [TILES.GOLD]:     '#ffd700',
-            [TILES.DIAMOND]:  '#00e5ff',
-            [TILES.BEDROCK]:  '#2d2d2d',
-            [TILES.FUEL]:     '#e67e22',
-            [TILES.BASE]:     '#27ae60',
-            [TILES.LAVA]:     '#c0392b',
-            [TILES.UNSTABLE]: '#a0522d'
-        };
+// ── Biomes ──────────────────────────────────────────────────────────────────
+const BIOMES = [
+    { name:'Surface',   from:0.00, to:0.08, bg:'#1a252f', tint:null },
+    { name:'Cavern',    from:0.08, to:0.35, bg:'#241a14', tint:null },
+    { name:'Ice Layer', from:0.35, to:0.55, bg:'#16232e', tint:'rgba(100,180,255,0.06)' },
+    { name:'Magma Layer',from:0.55, to:0.78, bg:'#2a1210', tint:'rgba(255,80,20,0.08)' },
+    { name:'Deep Core', from:0.78, to:1.01, bg:'#050505', tint:'rgba(150,0,255,0.05)' }
+];
+function getBiome(depthFrac) {
+    for (const b of BIOMES) if (depthFrac >= b.from && depthFrac < b.to) return b;
+    return BIOMES[BIOMES.length-1];
+}
 
-        const TILE_BORDER_COLORS = {
-            [TILES.EMPTY]:    '#111',
-            [TILES.DIRT]:     '#6b3410',
-            [TILES.STONE]:    '#4b5563',
-            [TILES.GOLD]:     '#b8960a',
-            [TILES.DIAMOND]:  '#0099aa',
-            [TILES.BEDROCK]:  '#1a1a1a',
-            [TILES.FUEL]:     '#a04010',
-            [TILES.BASE]:     '#1a7a40',
-            [TILES.LAVA]:     '#7b0000',
-            [TILES.UNSTABLE]: '#6b3010'
-        };
+const FUEL_PER_MOVE = 2, FUEL_PER_STONE = 3, MAX_FUEL = 200;
+const FUEL_CANISTER_AMOUNT = 40;
+const MAX_HULL = 100;
+const LAVA_FUEL_DAMAGE = 30, LAVA_HULL_DAMAGE = 20;
+const CAVEIN_HULL_DAMAGE = 15;
 
-        // Gem rewards
-        const GEM_REWARDS = {
-            [TILES.GOLD]:    50,
-            [TILES.DIAMOND]: 200
-        };
+const UPGRADES = [
+    { id:'drillPower', name:'⚙️ Drill Power', desc:'Increases drill strength', costs:[0,100,250,500,1000], maxLevel:4 },
+    { id:'moveSpeed', name:'🚀 Move Speed', desc:'Drill moves faster', costs:[0,80,200,400], maxLevel:3 },
+    { id:'fuelEfficiency', name:'⛽ Fuel Efficiency', desc:'Reduces fuel cost per move', costs:[0,120,300,600], maxLevel:3 },
+    { id:'fuelCapacity', name:'🛢️ Fuel Tank', desc:'Increases max fuel capacity', costs:[0,150,350,700], maxLevel:3 },
+    { id:'hullPlating', name:'🛡️ Hull Plating', desc:'Increases max hull & reduces damage', costs:[0,150,350,700], maxLevel:3 }
+];
 
-        // Fuel cost per move
-        const FUEL_PER_MOVE = 2;
-        const FUEL_PER_STONE = 3;
-        const MAX_FUEL = 200;
-        const FUEL_CANISTER_AMOUNT = 40;  // How much a canister refills
-        const BASE_REFUEL_AMOUNT = MAX_FUEL; // Base refuels to full
+// ── Game State ───────────────────────────────────────────────────────────────
+let grid = [], player = {}, score = 0, fuel = MAX_FUEL, maxFuel = MAX_FUEL;
+let hull = MAX_HULL, maxHull = MAX_HULL;
+let inventory = {}, gameOver = false, shopOpen = false, keys = {}, moveTimer = 0;
+const MOVE_DELAY = 8;
+let upgradeLevels = { drillPower:0, moveSpeed:0, fuelEfficiency:0, fuelCapacity:0, hullPlating:0 };
+let comboCount = 0, comboMultiplier = 1, comboTimer = 0;
+const COMBO_TIMER_MAX = 180; // 3s @ 60fps
+let soundEnabled = true;
+let unobtainiumFound = false;
 
-        // Upgrades definition
-        const UPGRADES = [
-            {
-                id: 'drillPower',
-                name: '⚙️ Drill Power',
-                desc: 'Increases drill strength (future: break harder rock)',
-                levels: [0, 1, 2, 3, 4],
-                costs: [0, 100, 250, 500, 1000],
-                maxLevel: 4
-            },
-            {
-                id: 'moveSpeed',
-                name: '🚀 Move Speed',
-                desc: 'Drill moves faster between tiles',
-                levels: [0, 1, 2, 3],
-                costs: [0, 80, 200, 400],
-                maxLevel: 3
-            },
-            {
-                id: 'fuelEfficiency',
-                name: '⛽ Fuel Efficiency',
-                desc: 'Reduces fuel cost per move',
-                levels: [0, 1, 2, 3],
-                costs: [0, 120, 300, 600],
-                maxLevel: 3
-            },
-            {
-                id: 'fuelCapacity',
-                name: '🛢️ Fuel Tank',
-                desc: 'Increases maximum fuel capacity',
-                levels: [0, 1, 2, 3],
-                costs: [0, 150, 350, 700],
-                maxLevel: 3
-            }
-        ];
+function getUpgradeValue(id) {
+    const lvl = upgradeLevels[id];
+    switch(id) {
+        case 'drillPower': return 5 + lvl*2;
+        case 'moveSpeed': return 6 + lvl*2;
+        case 'fuelEfficiency': return Math.max(1, FUEL_PER_MOVE - lvl);
+        case 'fuelCapacity': return MAX_FUEL + lvl*50;
+        case 'hullPlating': return MAX_HULL + lvl*40;
+        default: return 0;
+    }
+}
+function getHullDamageReduction() { return upgradeLevels.hullPlating * 0.15; } // up to 45% reduction
 
-        // Game State
-        let grid = [];
-        let player = {};
-        let score = 0;
-        let fuel = MAX_FUEL;
-        let maxFuel = MAX_FUEL;
-        let inventory = {};
-        let gameOver = false;
-        let shopOpen = false;
-        let keys = {};
-        let moveTimer = 0;
-        const MOVE_DELAY = 8; // frames between moves when key held
+function init() {
+    score = 0;
+    upgradeLevels = { drillPower:0, moveSpeed:0, fuelEfficiency:0, fuelCapacity:0, hullPlating:0 };
+    maxFuel = getUpgradeValue('fuelCapacity'); fuel = maxFuel;
+    maxHull = getUpgradeValue('hullPlating'); hull = maxHull;
+    inventory = {}; gameOver = false; shopOpen = false; keys = {}; moveTimer = 0;
+    comboCount = 0; comboMultiplier = 1; comboTimer = 0;
+    unobtainiumFound = false;
 
-        // Upgrade levels
-        let upgradeLevels = { drillPower: 0, moveSpeed: 0, fuelEfficiency: 0, fuelCapacity: 0 };
+    const startX = Math.floor(GRID_WIDTH/2), startY = 2;
+    player = {
+        x:startX*TILE_SIZE, y:startY*TILE_SIZE, targetX:startX*TILE_SIZE, targetY:startY*TILE_SIZE,
+        gridX:startX, gridY:startY, drillPower:getUpgradeValue('drillPower'), moving:false, facing:'down'
+    };
+    generateWorld();
+    updateUI();
+    overlay.classList.remove('visible');
+    shopOverlayEl.classList.remove('visible');
+}
 
-        function getUpgradeValue(id) {
-            const lvl = upgradeLevels[id];
-            switch(id) {
-                case 'drillPower':    return 5 + lvl * 2;       // 5,7,9,11,13
-                case 'moveSpeed':     return 6 + lvl * 2;       // 6,8,10,12 px/frame
-                case 'fuelEfficiency':return Math.max(1, FUEL_PER_MOVE - lvl); // 2,1,1,1
-                case 'fuelCapacity':  return MAX_FUEL + lvl * 50; // 200,250,300,350
-                default: return 0;
-            }
+function generateWorld() {
+    for (let y=0; y<GRID_HEIGHT; y++) {
+        grid[y] = [];
+        for (let x=0; x<GRID_WIDTH; x++) {
+            if (x===0 || x===GRID_WIDTH-1 || y===GRID_HEIGHT-1) { grid[y][x] = TILES.BEDROCK; continue; }
+            if (y <= 1) { grid[y][x] = TILES.EMPTY; continue; }
+
+            const depth = (y-2)/(GRID_HEIGHT-3);
+            const biome = getBiome(depth);
+            const rand = Math.random();
+
+            const stoneP = 0.05 + depth*0.35;
+            const goldP = stoneP + 0.02 + depth*0.05;
+            const rubyP = goldP + (depth > 0.30 ? 0.02 : 0);
+            const emeraldP = rubyP + (depth > 0.50 ? 0.018 : 0);
+            const diamondP = emeraldP + Math.max(0, (depth-0.4)*0.03);
+            const sapphireP = diamondP + (depth > 0.75 ? 0.012 : 0);
+            const fuelP = sapphireP + 0.015*(1-depth*0.5);
+            const lavaP = fuelP + (biome.name==='Magma Layer' ? Math.max(0,(depth-0.5)*0.10) : Math.max(0,(depth-0.5)*0.03));
+            const unstableP = lavaP + Math.max(0,(depth-0.2)*0.04);
+
+            if (rand < stoneP) grid[y][x] = TILES.STONE;
+            else if (rand < goldP) grid[y][x] = TILES.GOLD;
+            else if (rand < rubyP) grid[y][x] = TILES.RUBY;
+            else if (rand < emeraldP) grid[y][x] = TILES.EMERALD;
+            else if (rand < diamondP) grid[y][x] = TILES.DIAMOND;
+            else if (rand < sapphireP) grid[y][x] = TILES.SAPPHIRE;
+            else if (rand < fuelP) grid[y][x] = TILES.FUEL;
+            else if (rand < lavaP) grid[y][x] = TILES.LAVA;
+            else if (rand < unstableP) grid[y][x] = TILES.UNSTABLE;
+            else grid[y][x] = TILES.DIRT;
+        }
+    }
+
+    // Clear player start + place base
+    const startX = Math.floor(GRID_WIDTH/2);
+    for (let dy=0; dy<=2; dy++) for (let dx=-1; dx<=1; dx++) {
+        const gx=startX+dx, gy=dy;
+        if (grid[gy] && gx>=0 && gx<GRID_WIDTH) grid[gy][gx] = TILES.EMPTY;
+    }
+    grid[0][startX] = TILES.BASE;
+
+    // Place exactly one Unobtainium in the Deep Core zone
+    const deepCoreStartY = Math.floor(2 + 0.80*(GRID_HEIGHT-3));
+    let placed = false, attempts = 0;
+    while (!placed && attempts < 500) {
+        const rx = 1 + Math.floor(Math.random()*(GRID_WIDTH-2));
+        const ry = deepCoreStartY + Math.floor(Math.random()*(GRID_HEIGHT-3-deepCoreStartY));
+        if (grid[ry] && grid[ry][rx] !== TILES.BEDROCK && grid[ry][rx] !== TILES.BASE) {
+            grid[ry][rx] = TILES.UNOBTAINIUM;
+            placed = true;
+        }
+        attempts++;
+    }
+}
+
+// ── Sound (Web Audio API, procedural) ───────────────────────────────────────
+let audioCtx = null;
+function getAudioCtx() { if (!audioCtx) audioCtx = new (window.AudioContext||window.webkitAudioContext)(); return audioCtx; }
+function beep(freq, duration, type, gainVal) {
+    if (!soundEnabled) return;
+    try {
+        const ctxA = getAudioCtx();
+        const osc = ctxA.createOscillator(); const gain = ctxA.createGain();
+        osc.type = type || 'sine'; osc.frequency.value = freq;
+        gain.gain.setValueAtTime(gainVal || 0.15, ctxA.currentTime);
+        gain.gain.exponentialRampToValueAtTime(0.001, ctxA.currentTime + duration);
+        osc.connect(gain); gain.connect(ctxA.destination);
+        osc.start(); osc.stop(ctxA.currentTime + duration);
+    } catch(e) {}
+}
+function sfxDig() { beep(120,0.08,'square',0.06); }
+function sfxGem(rarity) { beep(500 + rarity*150, 0.18, 'sine', 0.12); beep(700 + rarity*150, 0.12, 'sine', 0.08); }
+function sfxFuel() { beep(300,0.15,'triangle',0.1); beep(450,0.12,'triangle',0.08); }
+function sfxLava() { beep(80,0.3,'sawtooth',0.15); }
+function sfxCavein() { beep(60,0.4,'sawtooth',0.12); }
+function sfxLegendary() { [523,659,784,1046].forEach((f,i)=>setTimeout(()=>beep(f,0.3,'sine',0.15), i*120)); }
+function sfxShop() { beep(600,0.08,'square',0.08); }
+
+document.getElementById('sound-toggle').addEventListener('click', function() {
+    soundEnabled = !soundEnabled;
+    this.textContent = soundEnabled ? '🔊' : '🔇';
+});
+
+// ── Particles ────────────────────────────────────────────────────────────────
+let particles = [];
+function spawnParticles(gx, gy, color, count) {
+    const px = gx*TILE_SIZE + TILE_SIZE/2, py = gy*TILE_SIZE + TILE_SIZE/2;
+    for (let i=0;i<count;i++) {
+        particles.push({
+            x:px, y:py, vx:(Math.random()-0.5)*4, vy:(Math.random()-0.5)*4 - 1,
+            life: 30+Math.random()*20, maxLife: 50, color, size: 2+Math.random()*3
+        });
+    }
+}
+
+// ── Combo ────────────────────────────────────────────────────────────────────
+function registerGemHit() {
+    comboCount++;
+    comboMultiplier = Math.min(5, 1 + (comboCount-1)*0.5);
+    comboTimer = COMBO_TIMER_MAX;
+}
+function resetCombo() { comboCount = 0; comboMultiplier = 1; comboTimer = 0; }
+
+// ── Movement / Mining ─────────────────────────────────────────────────────────
+function tryMove(dx, dy) {
+    if (gameOver || player.moving) return;
+    const newGridX = player.gridX+dx, newGridY = player.gridY+dy;
+    if (newGridX<0||newGridX>=GRID_WIDTH||newGridY<0||newGridY>=GRID_HEIGHT) return;
+    const targetTile = grid[newGridY][newGridX];
+    if (targetTile === TILES.BEDROCK) return;
+
+    let fuelCost = getUpgradeValue('fuelEfficiency');
+    if (targetTile === TILES.STONE) fuelCost += FUEL_PER_STONE;
+    if (fuel <= 0) { triggerGameOver('fuel'); return; }
+
+    if (dx>0) player.facing='right'; else if (dx<0) player.facing='left';
+    else if (dy>0) player.facing='down'; else if (dy<0) player.facing='up';
+
+    const isGem = [TILES.GOLD,TILES.DIAMOND,TILES.RUBY,TILES.EMERALD,TILES.SAPPHIRE,TILES.UNOBTAINIUM].includes(targetTile);
+
+    if (targetTile !== TILES.EMPTY) {
+        if (targetTile === TILES.LAVA) {
+            const dmgReduction = getHullDamageReduction();
+            fuel = Math.max(0, fuel - LAVA_FUEL_DAMAGE);
+            hull = Math.max(0, hull - LAVA_HULL_DAMAGE*(1-dmgReduction));
+            showFloatingText(`-${LAVA_FUEL_DAMAGE} Fuel / -Hull!`, newGridX, newGridY, '#e74c3c');
+            spawnParticles(newGridX, newGridY, '#ff6600', 10);
+            sfxLava();
+            resetCombo();
+            if (fuel<=0) triggerGameOver('fuel');
+            else if (hull<=0) triggerGameOver('hull');
+            return;
         }
 
-        function init() {
-            score = 0;
-            upgradeLevels = { drillPower: 0, moveSpeed: 0, fuelEfficiency: 0, fuelCapacity: 0 };
-            maxFuel = getUpgradeValue('fuelCapacity');
-            fuel = maxFuel;
-            inventory = {};
-            gameOver = false;
-            shopOpen = false;
-            keys = {};
-            moveTimer = 0;
+        const toughness = targetTile === TILES.STONE ? 3 : 1;
+        if (player.drillPower < toughness) return;
 
-            // Start player near top center
-            const startX = Math.floor(GRID_WIDTH / 2);
-            const startY = 2;
+        if (isGem) {
+            registerGemHit();
+            const gemName = GEM_NAMES[targetTile];
+            const baseReward = GEM_REWARDS[targetTile];
+            const reward = Math.round(baseReward * comboMultiplier);
+            score += reward;
+            inventory[gemName] = (inventory[gemName]||0)+1;
+            const rarity = targetTile===TILES.UNOBTAINIUM?6:targetTile===TILES.SAPPHIRE?4:targetTile===TILES.DIAMOND?3:targetTile===TILES.EMERALD?2:targetTile===TILES.RUBY?1:0;
+            sfxGem(rarity);
+            spawnParticles(newGridX, newGridY, TILE_COLORS[targetTile], targetTile===TILES.UNOBTAINIUM?30:12);
+            const comboTxt = comboMultiplier>1 ? ` (${comboMultiplier.toFixed(1)}x)` : '';
+            showFloatingText(`+${reward}${comboTxt}`, newGridX, newGridY, targetTile===TILES.UNOBTAINIUM?'#ffdd00':'#fff');
 
-            player = {
-                x: startX * TILE_SIZE,
-                y: startY * TILE_SIZE,
-                targetX: startX * TILE_SIZE,
-                targetY: startY * TILE_SIZE,
-                gridX: startX,
-                gridY: startY,
-                drillPower: getUpgradeValue('drillPower'),
-                moving: false,
-                facing: 'down' // for drill direction visual
-            };
-
-            generateWorld();
-            updateUI();
-            overlay.classList.remove('visible');
+            if (targetTile === TILES.UNOBTAINIUM) {
+                unobtainiumFound = true;
+                sfxLegendary();
+                showFloatingText('LEGENDARY!!!', newGridX, newGridY-1, '#ffdd00');
+            }
+        } else {
+            spawnParticles(newGridX, newGridY, targetTile===TILES.STONE?'#6b7280':'#8b4513', 6);
+            sfxDig();
         }
 
-        function generateWorld() {
-            for (let y = 0; y < GRID_HEIGHT; y++) {
-                grid[y] = [];
-                for (let x = 0; x < GRID_WIDTH; x++) {
-                    // Bedrock border
-                    if (x === 0 || x === GRID_WIDTH - 1 || y === GRID_HEIGHT - 1) {
-                        grid[y][x] = TILES.BEDROCK;
-                        continue;
-                    }
-
-                    // Top 2 rows are empty (surface)
-                    if (y <= 1) {
-                        grid[y][x] = TILES.EMPTY;
-                        continue;
-                    }
-
-                    // Depth factor: 0 at top, 1 at bottom
-                    const depth = (y - 2) / (GRID_HEIGHT - 3);
-                    const rand = Math.random();
-
-                    // Stone probability increases with depth
-                    const stoneProbability = 0.05 + depth * 0.35;
-                    // Gold probability peaks in mid-depth
-                    const goldProbability = stoneProbability + 0.02 + depth * 0.06;
-                    // Diamond probability increases sharply at depth
-                    const diamondProbability = goldProbability + Math.max(0, (depth - 0.4) * 0.04);
-                    // Fuel canisters: scattered throughout, more common near surface
-                    const fuelProbability = diamondProbability + 0.015 * (1 - depth * 0.5);
-                    // Lava pockets: only in deeper layers
-                    const lavaProbability = fuelProbability + Math.max(0, (depth - 0.5) * 0.06);
-                    // Unstable rock: mid-depth onwards
-                    const unstableProbability = lavaProbability + Math.max(0, (depth - 0.2) * 0.04);
-
-                    if (rand < stoneProbability) {
-                        grid[y][x] = TILES.STONE;
-                    } else if (rand < goldProbability) {
-                        grid[y][x] = TILES.GOLD;
-                    } else if (rand < diamondProbability) {
-                        grid[y][x] = TILES.DIAMOND;
-                    } else if (rand < fuelProbability) {
-                        grid[y][x] = TILES.FUEL;
-                    } else if (rand < lavaProbability) {
-                        grid[y][x] = TILES.LAVA;
-                    } else if (rand < unstableProbability) {
-                        grid[y][x] = TILES.UNSTABLE;
-                    } else {
-                        grid[y][x] = TILES.DIRT;
-                    }
-                }
-            }
-
-            // Clear a small area around the player start and place the base
-            const startX = Math.floor(GRID_WIDTH / 2);
-            for (let dy = 0; dy <= 2; dy++) {
-                for (let dx = -1; dx <= 1; dx++) {
-                    const gx = startX + dx;
-                    const gy = dy;
-                    if (grid[gy] && gx >= 0 && gx < GRID_WIDTH) {
-                        grid[gy][gx] = TILES.EMPTY;
-                    }
-                }
-            }
-
-            // Place the base at the surface start position (row 0)
-            grid[0][startX] = TILES.BASE;
+        if (targetTile === TILES.FUEL) {
+            fuel = Math.min(maxFuel, fuel + FUEL_CANISTER_AMOUNT);
+            showFloatingText('+Fuel', newGridX, newGridY, '#e67e22');
+            sfxFuel();
         }
 
-        function tryMove(dx, dy) {
-            if (gameOver || player.moving) return;
-
-            const newGridX = player.gridX + dx;
-            const newGridY = player.gridY + dy;
-
-            // Bounds check
-            if (newGridX < 0 || newGridX >= GRID_WIDTH || newGridY < 0 || newGridY >= GRID_HEIGHT) return;
-
-            const targetTile = grid[newGridY][newGridX];
-
-            // Bedrock is impassable
-            if (targetTile === TILES.BEDROCK) return;
-
-            // Determine fuel cost
-            let fuelCost = getUpgradeValue('fuelEfficiency');
-            if (targetTile === TILES.STONE) fuelCost += FUEL_PER_STONE;
-
-            if (fuel <= 0) {
-                triggerGameOver();
-                return;
-            }
-
-            // Set facing direction
-            if (dx > 0) player.facing = 'right';
-            else if (dx < 0) player.facing = 'left';
-            else if (dy > 0) player.facing = 'down';
-            else if (dy < 0) player.facing = 'up';
-
-            // Mine the tile if not empty
-            if (targetTile !== TILES.EMPTY) {
-                // Lava: impassable — damages fuel and blocks movement
-                if (targetTile === TILES.LAVA) {
-                    const lavaDamage = 30;
-                    fuel = Math.max(0, fuel - lavaDamage);
-                    showFloatingText(`-${lavaDamage} Fuel!`, newGridX, newGridY, '#e74c3c');
-                    if (fuel <= 0) triggerGameOver();
-                    return; // Can't move into lava
-                }
-
-                // Check drill power vs toughness
-                const toughness = targetTile === TILES.STONE ? 3 : 1;
-                if (player.drillPower < toughness) return; // can't drill this
-
-                // Collect gem if applicable
-                if (targetTile === TILES.GOLD || targetTile === TILES.DIAMOND) {
-                    const gemName = targetTile === TILES.GOLD ? 'Gold' : 'Diamond';
-                    const reward = GEM_REWARDS[targetTile];
-                    score += reward;
-                    inventory[gemName] = (inventory[gemName] || 0) + 1;
-                }
-
-                // Pick up fuel canister
-                if (targetTile === TILES.FUEL) {
-                    fuel = Math.min(maxFuel, fuel + FUEL_CANISTER_AMOUNT);
-                    showFloatingText('+Fuel', newGridX, newGridY, '#e67e22');
-                }
-
-                // Base tile: refuel to full and open shop
-                if (targetTile === TILES.BASE) {
-                    fuel = maxFuel;
-                    showFloatingText('Refuelled!', newGridX, newGridY, '#2ecc71');
-                    // Move onto base
-                    fuel = Math.max(0, fuel - fuelCost);
-                    player.moving = true;
-                    player.targetX = newGridX * TILE_SIZE;
-                    player.targetY = newGridY * TILE_SIZE;
-                    player.gridX = newGridX;
-                    player.gridY = newGridY;
-                    // Open shop after movement completes
-                    setTimeout(openShop, 300);
-                    return;
-                }
-
-                // Unstable rock: dig it, but trigger a cave-in around it
-                if (targetTile === TILES.UNSTABLE) {
-                    grid[newGridY][newGridX] = TILES.EMPTY;
-                    showFloatingText('Cave-in!', newGridX, newGridY, '#e67e22');
-                    triggerCaveIn(newGridX, newGridY);
-                    // Consume fuel and move
-                    fuel = Math.max(0, fuel - fuelCost);
-                    player.moving = true;
-                    player.targetX = newGridX * TILE_SIZE;
-                    player.targetY = newGridY * TILE_SIZE;
-                    player.gridX = newGridX;
-                    player.gridY = newGridY;
-                    if (fuel <= 0) setTimeout(triggerGameOver, 400);
-                    return;
-                }
-
-                grid[newGridY][newGridX] = TILES.EMPTY;
-            }
-
-            // Consume fuel
+        if (targetTile === TILES.BASE) {
+            fuel = maxFuel; hull = maxHull;
+            showFloatingText('Refuelled!', newGridX, newGridY, '#2ecc71');
             fuel = Math.max(0, fuel - fuelCost);
-
-            // Start movement animation
             player.moving = true;
-            player.targetX = newGridX * TILE_SIZE;
-            player.targetY = newGridY * TILE_SIZE;
-            player.gridX = newGridX;
-            player.gridY = newGridY;
-
-            if (fuel <= 0) {
-                // Allow the move to complete visually, then game over
-                setTimeout(triggerGameOver, 400);
-            }
+            player.targetX = newGridX*TILE_SIZE; player.targetY = newGridY*TILE_SIZE;
+            player.gridX = newGridX; player.gridY = newGridY;
+            setTimeout(openShop, 300);
+            return;
         }
 
-        // Cave-in: collapse nearby empty tiles back to dirt after a delay
-        function triggerCaveIn(cx, cy) {
-            const radius = 2;
-            const collapseTargets = [];
-            for (let dy = -radius; dy <= radius; dy++) {
-                for (let dx = -radius; dx <= radius; dx++) {
-                    if (dx === 0 && dy === 0) continue;
-                    const nx = cx + dx;
-                    const ny = cy + dy;
-                    if (nx < 1 || nx >= GRID_WIDTH - 1 || ny < 2 || ny >= GRID_HEIGHT - 1) continue;
-                    if (grid[ny][nx] === TILES.EMPTY) {
-                        collapseTargets.push({ x: nx, y: ny });
-                    }
-                }
-            }
-            // Collapse a random subset of nearby empty tiles back to dirt
-            const toCollapse = collapseTargets
-                .sort(() => Math.random() - 0.5)
-                .slice(0, Math.floor(collapseTargets.length * 0.4));
-
-            setTimeout(() => {
-                for (const t of toCollapse) {
-                    // Don't collapse the player's current tile
-                    if (t.x === player.gridX && t.y === player.gridY) continue;
-                    if (grid[t.y][t.x] === TILES.EMPTY) {
-                        grid[t.y][t.x] = TILES.DIRT;
-                    }
-                }
-            }, 500);
+        if (targetTile === TILES.UNSTABLE) {
+            grid[newGridY][newGridX] = TILES.EMPTY;
+            showFloatingText('Cave-in!', newGridX, newGridY, '#e67e22');
+            spawnParticles(newGridX, newGridY, '#a0522d', 14);
+            sfxCavein();
+            resetCombo();
+            triggerCaveIn(newGridX, newGridY);
+            fuel = Math.max(0, fuel - fuelCost);
+            player.moving = true;
+            player.targetX = newGridX*TILE_SIZE; player.targetY = newGridY*TILE_SIZE;
+            player.gridX = newGridX; player.gridY = newGridY;
+            if (fuel<=0) setTimeout(()=>triggerGameOver('fuel'),400);
+            return;
         }
 
-        // Shop logic
-        function openShop() {
-            if (gameOver) return;
-            shopOpen = true;
-            renderShop();
-            document.getElementById('shop-overlay').classList.add('visible');
-        }
+        grid[newGridY][newGridX] = TILES.EMPTY;
+    } else {
+        // Moving through empty space breaks combo streak
+        if (comboCount > 0) resetCombo();
+    }
 
-        function closeShop() {
-            shopOpen = false;
-            document.getElementById('shop-overlay').classList.remove('visible');
-            // Apply upgrades to player
-            player.drillPower = getUpgradeValue('drillPower');
-            maxFuel = getUpgradeValue('fuelCapacity');
-            fuel = Math.min(fuel, maxFuel);
-        }
+    fuel = Math.max(0, fuel - fuelCost);
+    player.moving = true;
+    player.targetX = newGridX*TILE_SIZE; player.targetY = newGridY*TILE_SIZE;
+    player.gridX = newGridX; player.gridY = newGridY;
+    if (fuel<=0) setTimeout(()=>triggerGameOver('fuel'),400);
+}
 
-        function renderShop() {
-            document.getElementById('shop-score').textContent = score;
-            const grid = document.getElementById('shop-grid');
-            grid.innerHTML = '';
-            for (const upg of UPGRADES) {
-                const currentLevel = upgradeLevels[upg.id];
-                const isMaxed = currentLevel >= upg.maxLevel;
-                const cost = isMaxed ? 0 : upg.costs[currentLevel + 1];
-                const canAfford = !isMaxed && score >= cost;
-
-                const div = document.createElement('div');
-                div.className = 'shop-item' + ((!canAfford && !isMaxed) ? ' disabled' : '');
-
-                div.innerHTML = `
-                    <span class="item-level">${isMaxed ? 'MAX' : `Lv ${currentLevel}/${upg.maxLevel}`}</span>
-                    <div class="item-name">${upg.name}</div>
-                    <div class="item-desc">${upg.desc}</div>
-                    <div class="item-cost">${isMaxed ? '✅ Maxed out' : `Cost: ${cost} pts`}</div>
-                `;
-
-                if (canAfford) {
-                    div.addEventListener('click', () => {
-                        score -= cost;
-                        upgradeLevels[upg.id]++;
-                        renderShop();
-                    });
-                }
-
-                grid.appendChild(div);
+function triggerCaveIn(cx, cy) {
+    const radius = 2, collapseTargets = [];
+    for (let dy=-radius; dy<=radius; dy++) for (let dx=-radius; dx<=radius; dx++) {
+        if (dx===0&&dy===0) continue;
+        const nx=cx+dx, ny=cy+dy;
+        if (nx<1||nx>=GRID_WIDTH-1||ny<2||ny>=GRID_HEIGHT-1) continue;
+        if (grid[ny][nx] === TILES.EMPTY) collapseTargets.push({x:nx,y:ny});
+    }
+    const toCollapse = collapseTargets.sort(()=>Math.random()-0.5).slice(0, Math.floor(collapseTargets.length*0.4));
+    setTimeout(()=>{
+        for (const t of toCollapse) {
+            if (t.x===player.gridX && t.y===player.gridY) {
+                const dmgReduction = getHullDamageReduction();
+                hull = Math.max(0, hull - CAVEIN_HULL_DAMAGE*(1-dmgReduction));
+                showFloatingText('-Hull!', t.x, t.y, '#e74c3c');
+                if (hull<=0) triggerGameOver('hull');
+                continue;
             }
+            if (grid[t.y][t.x] === TILES.EMPTY) grid[t.y][t.x] = TILES.DIRT;
         }
+    }, 500);
+}
 
-        document.getElementById('shop-close-btn').addEventListener('click', closeShop);
+// ── Shop ─────────────────────────────────────────────────────────────────────
+function openShop() {
+    if (gameOver) return;
+    shopOpen = true; renderShop(); shopOverlayEl.classList.add('visible');
+}
+function closeShop() {
+    shopOpen = false; shopOverlayEl.classList.remove('visible');
+    player.drillPower = getUpgradeValue('drillPower');
+    maxFuel = getUpgradeValue('fuelCapacity'); fuel = Math.min(fuel, maxFuel);
+    maxHull = getUpgradeValue('hullPlating'); hull = Math.min(hull, maxHull);
+}
+function renderShop() {
+    document.getElementById('shop-score').textContent = score;
+    const gridEl = document.getElementById('shop-grid'); gridEl.innerHTML = '';
+    for (const upg of UPGRADES) {
+        const currentLevel = upgradeLevels[upg.id];
+        const isMaxed = currentLevel >= upg.maxLevel;
+        const cost = isMaxed ? 0 : upg.costs[currentLevel+1];
+        const canAfford = !isMaxed && score >= cost;
+        const div = document.createElement('div');
+        div.className = 'shop-item' + ((!canAfford && !isMaxed) ? ' disabled' : '');
+        div.innerHTML = `<span class="item-level">${isMaxed?'MAX':`Lv ${currentLevel}/${upg.maxLevel}`}</span>
+            <div class="item-name">${upg.name}</div>
+            <div class="item-desc">${upg.desc}</div>
+            <div class="item-cost">${isMaxed?'✅ Maxed out':`Cost: ${cost} pts`}</div>`;
+        if (canAfford) div.addEventListener('click', ()=>{ score-=cost; upgradeLevels[upg.id]++; sfxShop(); renderShop(); });
+        gridEl.appendChild(div);
+    }
+}
+document.getElementById('shop-close-btn').addEventListener('click', closeShop);
 
-        // Floating text notifications
-        let floatingTexts = [];
-        function showFloatingText(text, gridX, gridY, color) {
-            floatingTexts.push({
-                text,
-                x: gridX * TILE_SIZE + TILE_SIZE / 2,
-                y: gridY * TILE_SIZE,
-                color: color || '#fff',
-                alpha: 1.0,
-                vy: -1.2,
-                life: 60
-            });
-        }
+// ── Leaderboard ──────────────────────────────────────────────────────────────
+const LB_KEY = 'gemdigger_leaderboard';
+function getLeaderboard() { try { return JSON.parse(localStorage.getItem(LB_KEY)||'[]'); } catch(e){ return []; } }
+function saveLeaderboardEntry(entry) {
+    const lb = getLeaderboard();
+    lb.push(entry);
+    lb.sort((a,b)=>b.score-a.score);
+    localStorage.setItem(LB_KEY, JSON.stringify(lb.slice(0,10)));
+}
+function renderLeaderboard() {
+    const lb = getLeaderboard();
+    const listEl = document.getElementById('leaderboard-list');
+    if (lb.length === 0) { listEl.innerHTML = '<div style="text-align:center;color:#7f8c8d;">No runs yet. Get digging!</div>'; return; }
+    listEl.innerHTML = lb.map((e,i)=>`<div class="lb-row ${i===0?'top1':''}"><span>#${i+1} ${i===0?'👑':''}</span><span>${e.score} pts</span><span>${e.depth}m</span><span>${e.gems} gems</span></div>`).join('');
+}
+document.getElementById('lb-toggle').addEventListener('click', ()=>{ renderLeaderboard(); lbOverlayEl.classList.add('visible'); });
+document.getElementById('overlay-lb-btn').addEventListener('click', ()=>{ renderLeaderboard(); lbOverlayEl.classList.add('visible'); });
+document.getElementById('lb-close-btn').addEventListener('click', ()=>{ lbOverlayEl.classList.remove('visible'); });
 
-        // High Score
-        const HS_KEY = 'gemdigger_highscore';
+// ── Floating Text ──────────────────────────────────────────────────────────
+let floatingTexts = [];
+function showFloatingText(text, gridX, gridY, color) {
+    floatingTexts.push({ text, x:gridX*TILE_SIZE+TILE_SIZE/2, y:gridY*TILE_SIZE, color:color||'#fff', alpha:1.0, vy:-1.2, life:60 });
+}
 
-        function triggerGameOver() {
-            if (gameOver) return;
-            gameOver = true;
-            // Save high score
-            const prevHS = parseInt(localStorage.getItem(HS_KEY) || '0', 10);
-            const newHS = Math.max(score, prevHS);
-            localStorage.setItem(HS_KEY, newHS);
+// ── Game Over ────────────────────────────────────────────────────────────────
+const HS_KEY = 'gemdigger_highscore';
+function triggerGameOver(reason) {
+    if (gameOver) return;
+    gameOver = true;
+    const prevHS = parseInt(localStorage.getItem(HS_KEY)||'0',10);
+    const newHS = Math.max(score, prevHS);
+    localStorage.setItem(HS_KEY, newHS);
 
-            finalScoreEl.textContent = score;
-            const hsEl = document.getElementById('high-score-display');
-            if (hsEl) hsEl.textContent = score >= prevHS && score > 0 ? '🏆 New High Score!' : `High Score: ${newHS}`;
+    const totalGems = Object.values(inventory).reduce((a,b)=>a+b,0);
+    const depthMeters = Math.max(0, player.gridY-2)*2;
+    saveLeaderboardEntry({ score, depth: depthMeters, gems: totalGems, date: new Date().toISOString() });
 
-            const gemList = Object.entries(inventory)
-                .map(([k, v]) => `${v}x ${k}`)
-                .join(', ');
-            gemsFoundEl.textContent = gemList ? `Gems collected: ${gemList}` : 'No gems collected.';
-            overlay.classList.add('visible');
-        }
+    overlayTitle.textContent = reason === 'hull' ? '💥 Drill Destroyed!' : '⛽ Out of Fuel!';
+    finalScoreEl.textContent = score;
+    const hsEl = document.getElementById('high-score-display');
+    if (hsEl) hsEl.textContent = score >= prevHS && score > 0 ? '🏆 New High Score!' : `High Score: ${newHS}`;
+    const gemList = Object.entries(inventory).map(([k,v])=>`${v}x ${k}`).join(', ');
+    gemsFoundEl.textContent = gemList ? `Gems collected: ${gemList}` : 'No gems collected.';
+    overlay.classList.add('visible');
+}
 
-        function updateUI() {
-            scoreElement.textContent = score;
-            const depthMeters = Math.max(0, player.gridY - 2) * 2;
-            depthElement.textContent = depthMeters;
-            const uiHS = document.getElementById('ui-highscore');
-            if (uiHS) uiHS.textContent = Math.max(score, parseInt(localStorage.getItem(HS_KEY) || '0', 10));
+// ── UI Update ────────────────────────────────────────────────────────────────
+function updateUI() {
+    scoreElement.textContent = score;
+    const uiHS = document.getElementById('ui-highscore');
+    if (uiHS) uiHS.textContent = Math.max(score, parseInt(localStorage.getItem(HS_KEY)||'0',10));
 
-            const fuelPct = (fuel / maxFuel) * 100;
-            fuelBar.style.width = fuelPct + '%';
+    const depthMeters = Math.max(0, player.gridY-2)*2;
+    depthElement.textContent = depthMeters;
+    const depthFrac = (player.gridY-2)/(GRID_HEIGHT-3);
+    biomeNameEl.textContent = getBiome(Math.max(0,depthFrac)).name;
 
-            // Color the fuel bar based on level
-            if (fuelPct > 50) {
-                fuelBar.style.background = '#2ecc71';
-            } else if (fuelPct > 25) {
-                fuelBar.style.background = '#f39c12';
-            } else {
-                fuelBar.style.background = '#e74c3c';
-            }
+    if (comboCount > 1) comboDisplay.textContent = `🔥 Combo x${comboCount} (${comboMultiplier.toFixed(1)}x)`;
+    else comboDisplay.textContent = '';
 
-            const gemList = Object.entries(inventory)
-                .map(([k, v]) => `${v}x ${k}`)
-                .join(', ');
-            inventoryElement.textContent = 'Gems: ' + (gemList || 'None');
-        }
+    const fuelPct = (fuel/maxFuel)*100; fuelBar.style.width = fuelPct+'%';
+    fuelBar.style.background = fuelPct>50?'#2ecc71':fuelPct>25?'#f39c12':'#e74c3c';
+    const hullPct = (hull/maxHull)*100; hullBar.style.width = hullPct+'%';
+    hullBar.style.background = hullPct>50?'#3498db':hullPct>25?'#e67e22':'#c0392b';
 
-        // Game Loop
-        function update() {
-            if (gameOver || shopOpen) return;
+    const gemList = Object.entries(inventory).map(([k,v])=>`${v}x ${k}`).join(', ');
+    inventoryElement.textContent = 'Gems: '+(gemList||'None');
+}
 
-            // Handle held keys with delay
-            if (moveTimer > 0) {
-                moveTimer--;
-            } else {
-                if (keys['ArrowUp'])    { tryMove(0, -1); moveTimer = MOVE_DELAY; }
-                if (keys['ArrowDown'])  { tryMove(0,  1); moveTimer = MOVE_DELAY; }
-                if (keys['ArrowLeft'])  { tryMove(-1, 0); moveTimer = MOVE_DELAY; }
-                if (keys['ArrowRight']) { tryMove( 1, 0); moveTimer = MOVE_DELAY; }
-            }
+// ── Update Loop ──────────────────────────────────────────────────────────────
+function update() {
+    if (gameOver || shopOpen) return;
 
-            // Animate player towards target
-            const SPEED = getUpgradeValue('moveSpeed');
-            if (player.x !== player.targetX) {
-                const dir = player.targetX > player.x ? 1 : -1;
-                player.x += dir * SPEED;
-                if (Math.abs(player.targetX - player.x) <= SPEED) {
-                    player.x = player.targetX;
-                }
-            }
-            if (player.y !== player.targetY) {
-                const dir = player.targetY > player.y ? 1 : -1;
-                player.y += dir * SPEED;
-                if (Math.abs(player.targetY - player.y) <= SPEED) {
-                    player.y = player.targetY;
-                }
-            }
+    if (moveTimer > 0) moveTimer--;
+    else {
+        if (keys['ArrowUp']) { tryMove(0,-1); moveTimer=MOVE_DELAY; }
+        if (keys['ArrowDown']) { tryMove(0,1); moveTimer=MOVE_DELAY; }
+        if (keys['ArrowLeft']) { tryMove(-1,0); moveTimer=MOVE_DELAY; }
+        if (keys['ArrowRight']) { tryMove(1,0); moveTimer=MOVE_DELAY; }
+    }
 
-            // Mark as done moving when snapped
-            if (player.x === player.targetX && player.y === player.targetY) {
-                player.moving = false;
-            }
+    const SPEED = getUpgradeValue('moveSpeed');
+    if (player.x !== player.targetX) {
+        const dir = player.targetX>player.x?1:-1; player.x += dir*SPEED;
+        if (Math.abs(player.targetX-player.x)<=SPEED) player.x = player.targetX;
+    }
+    if (player.y !== player.targetY) {
+        const dir = player.targetY>player.y?1:-1; player.y += dir*SPEED;
+        if (Math.abs(player.targetY-player.y)<=SPEED) player.y = player.targetY;
+    }
+    if (player.x===player.targetX && player.y===player.targetY) player.moving=false;
 
-            updateUI();
-        }
+    if (comboTimer > 0) { comboTimer--; if (comboTimer===0) resetCombo(); }
 
-        function draw() {
-            ctx.clearRect(0, 0, canvas.width, canvas.height);
+    // Update particles
+    particles = particles.filter(p=>p.life>0);
+    for (const p of particles) { p.x+=p.vx; p.y+=p.vy; p.vy+=0.15; p.life--; }
 
-            // Camera: center on player
-            const camX = player.x + TILE_SIZE / 2 - canvas.width / 2;
-            const camY = player.y + TILE_SIZE / 2 - canvas.height / 2;
+    updateUI();
+}
 
-            // Clamp camera to world bounds
-            const maxCamX = GRID_WIDTH * TILE_SIZE - canvas.width;
-            const maxCamY = GRID_HEIGHT * TILE_SIZE - canvas.height;
-            const clampedCamX = Math.max(0, Math.min(camX, maxCamX));
-            const clampedCamY = Math.max(0, Math.min(camY, maxCamY));
+// ── Draw ────────────────────────────────────────────────────────────────────
+function draw() {
+    const depthFrac = Math.max(0,(player.gridY-2)/(GRID_HEIGHT-3));
+    const biome = getBiome(depthFrac);
+    ctx.fillStyle = biome.bg;
+    ctx.fillRect(0,0,canvas.width,canvas.height);
 
-            ctx.save();
-            ctx.translate(-clampedCamX, -clampedCamY);
+    const camX = player.x+TILE_SIZE/2-canvas.width/2;
+    const camY = player.y+TILE_SIZE/2-canvas.height/2;
+    const maxCamX = GRID_WIDTH*TILE_SIZE-canvas.width;
+    const maxCamY = GRID_HEIGHT*TILE_SIZE-canvas.height;
+    const clampedCamX = Math.max(0, Math.min(camX, maxCamX));
+    const clampedCamY = Math.max(0, Math.min(camY, maxCamY));
 
-            // Only draw visible tiles
-            const startTileX = Math.max(0, Math.floor(clampedCamX / TILE_SIZE));
-            const endTileX = Math.min(GRID_WIDTH - 1, Math.ceil((clampedCamX + canvas.width) / TILE_SIZE));
-            const startTileY = Math.max(0, Math.floor(clampedCamY / TILE_SIZE));
-            const endTileY = Math.min(GRID_HEIGHT - 1, Math.ceil((clampedCamY + canvas.height) / TILE_SIZE));
+    ctx.save();
+    ctx.translate(-clampedCamX, -clampedCamY);
 
-            for (let y = startTileY; y <= endTileY; y++) {
-                for (let x = startTileX; x <= endTileX; x++) {
-                    const type = grid[y][x];
-                    const px = x * TILE_SIZE;
-                    const py = y * TILE_SIZE;
+    const startTileX = Math.max(0, Math.floor(clampedCamX/TILE_SIZE));
+    const endTileX = Math.min(GRID_WIDTH-1, Math.ceil((clampedCamX+canvas.width)/TILE_SIZE));
+    const startTileY = Math.max(0, Math.floor(clampedCamY/TILE_SIZE));
+    const endTileY = Math.min(GRID_HEIGHT-1, Math.ceil((clampedCamY+canvas.height)/TILE_SIZE));
 
-                    // Fill
-                    ctx.fillStyle = TILE_COLORS[type] || '#111';
-                    ctx.fillRect(px, py, TILE_SIZE, TILE_SIZE);
-
-                    // Border/shading for solid tiles
-                    if (type !== TILES.EMPTY) {
-                        ctx.strokeStyle = TILE_BORDER_COLORS[type] || '#000';
-                        ctx.lineWidth = 1;
-                        ctx.strokeRect(px + 0.5, py + 0.5, TILE_SIZE - 1, TILE_SIZE - 1);
-                    }
-
-                    // Gem glow effect
-                    if (type === TILES.GOLD || type === TILES.DIAMOND) {
-                        ctx.save();
-                        ctx.globalAlpha = 0.3 + 0.15 * Math.sin(Date.now() / 300);
-                        ctx.fillStyle = type === TILES.GOLD ? '#fff8a0' : '#a0f8ff';
-                        ctx.fillRect(px + 4, py + 4, TILE_SIZE - 8, TILE_SIZE - 8);
-                        ctx.restore();
-                    }
-
-                    // Lava animated glow
-                    if (type === TILES.LAVA) {
-                        ctx.save();
-                        ctx.globalAlpha = 0.4 + 0.3 * Math.sin(Date.now() / 200 + x * 0.5);
-                        ctx.fillStyle = '#ff6600';
-                        ctx.fillRect(px + 3, py + 3, TILE_SIZE - 6, TILE_SIZE - 6);
-                        ctx.restore();
-                        // Lava icon
-                        ctx.save();
-                        ctx.fillStyle = '#fff';
-                        ctx.font = `bold ${TILE_SIZE * 0.5}px sans-serif`;
-                        ctx.textAlign = 'center';
-                        ctx.textBaseline = 'middle';
-                        ctx.fillText('🌋', px + TILE_SIZE / 2, py + TILE_SIZE / 2);
-                        ctx.restore();
-                    }
-
-                    // Unstable rock: cracked appearance
-                    if (type === TILES.UNSTABLE) {
-                        ctx.save();
-                        ctx.strokeStyle = '#ff8c00';
-                        ctx.lineWidth = 1.5;
-                        ctx.globalAlpha = 0.6;
-                        // Draw crack lines
-                        ctx.beginPath();
-                        ctx.moveTo(px + 8, py + 5);
-                        ctx.lineTo(px + 20, py + 20);
-                        ctx.lineTo(px + 15, py + 35);
-                        ctx.stroke();
-                        ctx.beginPath();
-                        ctx.moveTo(px + 25, py + 8);
-                        ctx.lineTo(px + 18, py + 22);
-                        ctx.stroke();
-                        ctx.restore();
-                    }
-
-                    // Fuel canister icon
-                    if (type === TILES.FUEL) {
-                        ctx.save();
-                        ctx.globalAlpha = 0.85 + 0.15 * Math.sin(Date.now() / 400);
-                        ctx.fillStyle = '#fff';
-                        ctx.font = `bold ${TILE_SIZE * 0.55}px sans-serif`;
-                        ctx.textAlign = 'center';
-                        ctx.textBaseline = 'middle';
-                        ctx.fillText('⛽', px + TILE_SIZE / 2, py + TILE_SIZE / 2);
-                        ctx.restore();
-                    }
-
-                    // Base station icon
-                    if (type === TILES.BASE) {
-                        ctx.save();
-                        ctx.fillStyle = '#fff';
-                        ctx.font = `bold ${TILE_SIZE * 0.55}px sans-serif`;
-                        ctx.textAlign = 'center';
-                        ctx.textBaseline = 'middle';
-                        ctx.fillText('🏠', px + TILE_SIZE / 2, py + TILE_SIZE / 2);
-                        ctx.restore();
-                    }
-                }
+    for (let y=startTileY; y<=endTileY; y++) {
+        for (let x=startTileX; x<=endTileX; x++) {
+            const type = grid[y][x];
+            const px = x*TILE_SIZE, py = y*TILE_SIZE;
+            ctx.fillStyle = TILE_COLORS[type] || '#111';
+            ctx.fillRect(px,py,TILE_SIZE,TILE_SIZE);
+            if (type !== TILES.EMPTY) {
+                ctx.strokeStyle = TILE_BORDER_COLORS[type] || '#000';
+                ctx.lineWidth = 1;
+                ctx.strokeRect(px+0.5,py+0.5,TILE_SIZE-1,TILE_SIZE-1);
             }
 
-            // Draw floating texts
-            floatingTexts = floatingTexts.filter(ft => ft.life > 0);
-            for (const ft of floatingTexts) {
+            if ([TILES.GOLD,TILES.DIAMOND,TILES.RUBY,TILES.EMERALD,TILES.SAPPHIRE].includes(type)) {
                 ctx.save();
-                ctx.globalAlpha = ft.alpha;
-                ctx.fillStyle = ft.color;
-                ctx.font = 'bold 13px Segoe UI, sans-serif';
-                ctx.textAlign = 'center';
-                ctx.textBaseline = 'middle';
-                ctx.fillText(ft.text, ft.x, ft.y);
+                ctx.globalAlpha = 0.3+0.15*Math.sin(Date.now()/300);
+                ctx.fillStyle = TILE_COLORS[type];
+                ctx.fillRect(px+4,py+4,TILE_SIZE-8,TILE_SIZE-8);
                 ctx.restore();
-                ft.y += ft.vy;
-                ft.life--;
-                ft.alpha = ft.life / 60;
             }
 
-            // Draw Player (Drill)
-            const px = player.x + TILE_SIZE / 2;
-            const py = player.y + TILE_SIZE / 2;
-            const r = TILE_SIZE / 2.5;
-
-            // Drill body
-            ctx.save();
-            ctx.translate(px, py);
-
-            // Rotate based on facing direction
-            const rotations = { right: 0, down: Math.PI / 2, left: Math.PI, up: -Math.PI / 2 };
-            ctx.rotate(rotations[player.facing] || 0);
-
-            // Body (circle)
-            ctx.fillStyle = '#c0392b';
-            ctx.beginPath();
-            ctx.arc(0, 0, r, 0, Math.PI * 2);
-            ctx.fill();
-
-            // Drill bit (triangle pointing right = forward)
-            ctx.fillStyle = '#e8e8e8';
-            ctx.beginPath();
-            ctx.moveTo(r, 0);
-            ctx.lineTo(r * 0.3, -r * 0.5);
-            ctx.lineTo(r * 0.3, r * 0.5);
-            ctx.closePath();
-            ctx.fill();
-
-            // Highlight
-            ctx.fillStyle = 'rgba(255,255,255,0.25)';
-            ctx.beginPath();
-            ctx.arc(-r * 0.2, -r * 0.3, r * 0.4, 0, Math.PI * 2);
-            ctx.fill();
-
-            ctx.restore();
-
-            ctx.restore();
-        }
-
-        function gameLoop() {
-            update();
-            draw();
-            requestAnimationFrame(gameLoop);
-        }
-
-        // Input Handling
-        window.addEventListener('keydown', (e) => {
-            if (['ArrowUp','ArrowDown','ArrowLeft','ArrowRight'].includes(e.key)) {
-                e.preventDefault();
-                if (!keys[e.key]) {
-                    // Immediate move on first press
-                    keys[e.key] = true;
-                    moveTimer = 0;
-                } else {
-                    keys[e.key] = true;
-                }
+            if (type === TILES.UNOBTAINIUM) {
+                ctx.save();
+                const hue = (Date.now()/10) % 360;
+                ctx.fillStyle = `hsl(${hue},100%,70%)`;
+                ctx.globalAlpha = 0.6+0.3*Math.sin(Date.now()/150);
+                ctx.beginPath();
+                ctx.arc(px+TILE_SIZE/2, py+TILE_SIZE/2, TILE_SIZE/2-2, 0, Math.PI*2);
+                ctx.fill();
+                ctx.fillStyle = '#fff';
+                ctx.font = `bold ${TILE_SIZE*0.5}px sans-serif`;
+                ctx.textAlign='center'; ctx.textBaseline='middle';
+                ctx.fillText('✨', px+TILE_SIZE/2, py+TILE_SIZE/2);
+                ctx.restore();
             }
-        });
 
-        window.addEventListener('keyup', (e) => {
-            keys[e.key] = false;
-            // Reset move timer so next key press is immediate
-            const anyHeld = ['ArrowUp','ArrowDown','ArrowLeft','ArrowRight'].some(k => keys[k]);
-            if (!anyHeld) moveTimer = 0;
-        });
+            if (type === TILES.LAVA) {
+                ctx.save();
+                ctx.globalAlpha = 0.4+0.3*Math.sin(Date.now()/200+x*0.5);
+                ctx.fillStyle = '#ff6600';
+                ctx.fillRect(px+3,py+3,TILE_SIZE-6,TILE_SIZE-6);
+                ctx.restore();
+                ctx.save();
+                ctx.fillStyle='#fff'; ctx.font=`bold ${TILE_SIZE*0.5}px sans-serif`;
+                ctx.textAlign='center'; ctx.textBaseline='middle';
+                ctx.fillText('🌋', px+TILE_SIZE/2, py+TILE_SIZE/2);
+                ctx.restore();
+            }
 
-        restartBtn.addEventListener('click', () => {
-            init();
-        });
+            if (type === TILES.UNSTABLE) {
+                ctx.save();
+                ctx.strokeStyle='#ff8c00'; ctx.lineWidth=1.5; ctx.globalAlpha=0.6;
+                ctx.beginPath(); ctx.moveTo(px+8,py+5); ctx.lineTo(px+20,py+20); ctx.lineTo(px+15,py+35); ctx.stroke();
+                ctx.beginPath(); ctx.moveTo(px+25,py+8); ctx.lineTo(px+18,py+22); ctx.stroke();
+                ctx.restore();
+            }
 
-        // Mobile D-Pad controls
-        const dpadBtnMap = {
-            'dpad-up':    [0, -1],
-            'dpad-down':  [0,  1],
-            'dpad-left':  [-1, 0],
-            'dpad-right': [ 1, 0]
-        };
-        let touchInterval = null;
-        Object.entries(dpadBtnMap).forEach(([id, dir]) => {
-            const btn = document.getElementById(id);
-            if (!btn) return;
-            const startMove = () => {
-                tryMove(...dir);
-                touchInterval = setInterval(() => tryMove(...dir), 150);
-            };
-            const stopMove = () => { clearInterval(touchInterval); touchInterval = null; };
-            btn.addEventListener('touchstart', (e) => { e.preventDefault(); startMove(); }, { passive: false });
-            btn.addEventListener('touchend', stopMove);
-            btn.addEventListener('mousedown', startMove);
-            btn.addEventListener('mouseup', stopMove);
-            btn.addEventListener('mouseleave', stopMove);
-        });
+            if (type === TILES.FUEL) {
+                ctx.save();
+                ctx.globalAlpha = 0.85+0.15*Math.sin(Date.now()/400);
+                ctx.fillStyle='#fff'; ctx.font=`bold ${TILE_SIZE*0.55}px sans-serif`;
+                ctx.textAlign='center'; ctx.textBaseline='middle';
+                ctx.fillText('⛽', px+TILE_SIZE/2, py+TILE_SIZE/2);
+                ctx.restore();
+            }
 
-        init();
-        gameLoop();
-    </script>
+            if (type === TILES.BASE) {
+                ctx.save();
+                ctx.fillStyle='#fff'; ctx.font=`bold ${TILE_SIZE*0.55}px sans-serif`;
+                ctx.textAlign='center'; ctx.textBaseline='middle';
+                ctx.fillText('🏠', px+TILE_SIZE/2, py+TILE_SIZE/2);
+                ctx.restore();
+            }
+        }
+    }
+
+    // Biome tint overlay
+    if (biome.tint) {
+        ctx.fillStyle = biome.tint;
+        ctx.fillRect(clampedCamX, clampedCamY, canvas.width, canvas.height);
+    }
+
+    // Particles
+    for (const p of particles) {
+        ctx.save();
+        ctx.globalAlpha = Math.max(0, p.life/50);
+        ctx.fillStyle = p.color;
+        ctx.beginPath();
+        ctx.arc(p.x, p.y, p.size, 0, Math.PI*2);
+        ctx.fill();
+        ctx.restore();
+    }
+
+    // Floating texts
+    floatingTexts = floatingTexts.filter(ft=>ft.life>0);
+    for (const ft of floatingTexts) {
+        ctx.save();
+        ctx.globalAlpha = ft.alpha;
+        ctx.fillStyle = ft.color;
+        ctx.font = 'bold 13px Segoe UI, sans-serif';
+        ctx.textAlign='center'; ctx.textBaseline='middle';
+        ctx.fillText(ft.text, ft.x, ft.y);
+        ctx.restore();
+        ft.y += ft.vy; ft.life--; ft.alpha = ft.life/60;
+    }
+
+    // Player (Drill)
+    const px = player.x+TILE_SIZE/2, py = player.y+TILE_SIZE/2, r = TILE_SIZE/2.5;
+    ctx.save();
+    ctx.translate(px,py);
+    const rotations = { right:0, down:Math.PI/2, left:Math.PI, up:-Math.PI/2 };
+    ctx.rotate(rotations[player.facing]||0);
+    ctx.fillStyle='#c0392b'; ctx.beginPath(); ctx.arc(0,0,r,0,Math.PI*2); ctx.fill();
+    ctx.fillStyle='#e8e8e8'; ctx.beginPath();
+    ctx.moveTo(r,0); ctx.lineTo(r*0.3,-r*0.5); ctx.lineTo(r*0.3,r*0.5); ctx.closePath(); ctx.fill();
+    ctx.fillStyle='rgba(255,255,255,0.25)'; ctx.beginPath(); ctx.arc(-r*0.2,-r*0.3,r*0.4,0,Math.PI*2); ctx.fill();
+    ctx.restore();
+
+    ctx.restore();
+}
+
+function gameLoop() { update(); draw(); requestAnimationFrame(gameLoop); }
+
+// ── Input ────────────────────────────────────────────────────────────────────
+window.addEventListener('keydown', (e)=>{
+    if (['ArrowUp','ArrowDown','ArrowLeft','ArrowRight'].includes(e.key)) {
+        e.preventDefault();
+        if (!keys[e.key]) { keys[e.key]=true; moveTimer=0; } else keys[e.key]=true;
+    }
+});
+window.addEventListener('keyup', (e)=>{
+    keys[e.key]=false;
+    const anyHeld = ['ArrowUp','ArrowDown','ArrowLeft','ArrowRight'].some(k=>keys[k]);
+    if (!anyHeld) moveTimer=0;
+});
+restartBtn.addEventListener('click', ()=>{ init(); });
+
+const dpadBtnMap = { 'dpad-up':[0,-1], 'dpad-down':[0,1], 'dpad-left':[-1,0], 'dpad-right':[1,0] };
+let touchInterval = null;
+Object.entries(dpadBtnMap).forEach(([id,dir])=>{
+    const btn = document.getElementById(id); if (!btn) return;
+    const startMove = ()=>{ tryMove(...dir); touchInterval = setInterval(()=>tryMove(...dir), 150); };
+    const stopMove = ()=>{ clearInterval(touchInterval); touchInterval=null; };
+    btn.addEventListener('touchstart', (e)=>{ e.preventDefault(); startMove(); }, {passive:false});
+    btn.addEventListener('touchend', stopMove);
+    btn.addEventListener('mousedown', startMove);
+    btn.addEventListener('mouseup', stopMove);
+    btn.addEventListener('mouseleave', stopMove);
+});
+
+init();
+gameLoop();
+</script>
 </body>
 </html>
