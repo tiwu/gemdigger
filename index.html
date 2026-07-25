@@ -1,0 +1,179 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Digger - Gem Hunt</title>
+    <style>
+        body {
+            margin: 0;
+            padding: 0;
+            background-color: #2c3e50;
+            color: white;
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            height: 100vh;
+            overflow: hidden;
+        }
+
+        #ui {
+            position: absolute;
+            top: 20px;
+            left: 20px;
+            background: rgba(0, 0, 0, 0.6);
+            padding: 15px;
+            border-radius: 8px;
+            border: 1px solid #ecf0f1;
+        }
+
+        canvas {
+            background-color: #34495e;
+            box-shadow: 0 0 20px rgba(0,0,0,0.5);
+            image-rendering: pixelated;
+        }
+    </style>
+</head>
+<body>
+    <div id="ui">
+        <h1 style="margin: 0; font-size: 18px;">Digger</h1>
+        <div>Score: <span id="score">0</span></div>
+        <div id="inventory">Inventory: None</div>
+    </div>
+    <canvas id="gameCanvas"></canvas>
+
+    <script>
+        const canvas = document.getElementById('gameCanvas');
+        const ctx = canvas.getContext('2d');
+        const scoreElement = document.getElementById('score');
+        const inventoryElement = document.getElementById('inventory');
+
+        // Configuration
+        const TILE_SIZE = 40;
+        const GRID_WIDTH = 50;
+        const GRID_HEIGHT = 50;
+        canvas.width = GRID_WIDTH * TILE_SIZE;
+        canvas.height = GRID_HEIGHT * TILE_SIZE;
+
+        // Tile Types
+        const TILES = {
+            EMPTY: 0,
+            DIRT: 1,      // Easy to dig
+            STONE: 2,     // Harder to dig
+            GEM: 3        // Reward!
+        };
+
+        const COLORS = {
+            [TILES.EMPTY]: '#000',
+            [TILES.DIRT]: '#8b4513',
+            [TILES.STONE]: '#808080',
+            [TILES.GEM]: '#ffd700'
+        };
+
+        // Game State
+        let grid = [];
+        let player = {
+            x: 25 * TILE_SIZE,
+            y: 25 * TILE_SIZE,
+            targetX: 25 * TILE_SIZE,
+            targetY: 25 * TILE_SIZE,
+            drillPower: 5
+        };
+        let score = 0;
+        let inventory = [];
+
+        // Initialize World
+        function init() {
+            for (let y = 0; y < GRID_HEIGHT; y++) {
+                grid[y] = [];
+                for (let x = 0; x < GRID_WIDTH; x++) {
+                    let type = TILES.DIRT;
+                    const rand = Math.random();
+                    if (rand > 0.9) type = TILES.STONE;
+                    if (rand > 0.98 && y > 10) type = TILES.GEM;
+                    grid[y][x] = type;
+                }
+            }
+        }
+
+        // Game Loop Logic
+        function update() {
+            // Move player towards target
+            if (player.x !== player.targetX) {
+                const dx = Math.abs(player.targetX - player.x);
+                const dy = Math.abs(player.targetY - player.y);
+                if (dx > dy) {
+                    player.x += (player.targetX > player.x ? 1 : -1) * 2;
+                } else {
+                    player.y += (player.targetY > player.y ? 1 : -1) * 2;
+                }
+            }
+
+            // Check for collisions and mining
+            const gridX = Math.floor(player.x / TILE_SIZE);
+            const gridY = Math.floor(player.y / TILE_SIZE);
+
+            if (grid[gridY] && grid[gridY][gridX] !== TILES.EMPTY) {
+                let type = grid[gridY][gridX];
+                if (type === TILES.GEM) {
+                    score += 100;
+                    inventory_push("Gem");
+                    grid[gridY][gridX] = TILES.EMPTY;
+                } else if (type === TILES.DIRT || type === TILES.STONE) {
+                    // Drill logic: check power vs material
+                    const toughness = type === TILES.STONE ? 3 : 1;
+                    if (player.drillPower >= toughness) {
+                        grid[gridY][gridX] = TILES.EMPTY;
+                    }
+                }
+            }
+
+            scoreElement.innerText = score;
+        }
+
+        function inventory_push(item) {
+            inventory.push(item);
+            inventoryElement.innerText = "Inventory: " + inventory.join(", ");
+        }
+
+        // Rendering Loop
+        function draw() {
+            ctx.clearRect(0, 0, canvas.width, canvas.height);
+
+            for (let y = 0; y < GRID_HEIGHT; y++) {
+                for (let x = 0; x < GRID_WIDTH; x++) {
+                    const type = grid[y][x];
+                    ctx.fillStyle = COLORS[type];
+                    ctx.fillRect(x * TILE_SIZE, y * TILE_SIZE, TILE_SIZE, TILE_SIZE);
+                }
+            }
+
+            // Draw Player (Drill)
+            ctx.fillStyle = 'red';
+            ctx.beginPath();
+            ctx.arc(player.x + TILE_SIZE/2, player.y + TILE_SIZE/2, TILE_SIZE/3, 0, Math.PI * 2);
+            ctx.fill();
+
+            requestAnimationFrame(() => {
+                update();
+                draw();
+            });
+        }
+
+        // Input Handling
+        window.addEventListener('keydown', (e) => {
+            switch(e.key) {
+                case 'ArrowUp':    player.targetY -= TILE_SIZE; break;
+                case 'ArrowDown':  player.targetY += TILE_SIZE; break;
+                case 'ArrowLeft':  player.targetX -= TILE_SIZE; break;
+                case 'ArrowRight': player.targetX += TILE_SIZE; break;
+            }
+        });
+
+        init();
+        draw();
+    </script>
+</body>
+</html>
