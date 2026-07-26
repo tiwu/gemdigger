@@ -112,3 +112,7 @@ Configure GitHub Pages under **Settings → Pages → Build and deployment** wit
 - **E**: deploy a carried outpost kit on cleared ground
 - Return to the surface **🏠 Base** to refuel and buy upgrades
 - Watch **⛽ Fuel** and **🛡️ Hull** — depleting either ends the run
+
+## Roadmap
+
+See the [Roadmap](./adr/roadmap.md) for planned features and development phases.
