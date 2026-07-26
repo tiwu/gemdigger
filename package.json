@@ -13,6 +13,7 @@
     "lint": "eslint . && stylelint \"**/*.css\""
   },
   "devDependencies": {
+    "@eslint/js": "^10.0.1",
     "eslint": "^10.8.0",
     "eslint-plugin-html": "^8.1.4",
     "eslint-plugin-jsonc": "^3.3.0",
