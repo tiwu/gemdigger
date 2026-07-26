@@ -1,6 +1,6 @@
-const test = require('node:test');
-const assert = require('node:assert');
-const { pickTileForRoll, getBiome, TILES } = require('../game-logic.js');
+import { test } from 'vitest';
+import assert from 'node:assert';
+import { pickTileForRoll, getBiome, TILES } from '../src/js/game-logic.js';
 
 test('pickTileForRoll returns STONE for low rolls', () => {
     const biome = getBiome(0.5);

@@ -1,0 +1,16 @@
+# Project Guidelines
+
+## Documentation
+- Update relevant docs when modifying features
+- Keep README.md in sync with new capabilities
+- When in plan mode, always include a first step to write the plan to a plan.md in the workspace.
+
+## Coding
+- minimize external dependencies, they increase our security risk surface
+- prefer simple idioms over elaborate constructions
+- explain non-tivial code with comments
+
+## Testing
+- Unit tests are required for all scripting
+- Integration tests for game mechanics is desired
+- working code over test coverage

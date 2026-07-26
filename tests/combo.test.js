@@ -1,6 +1,6 @@
-const test = require('node:test');
-const assert = require('node:assert');
-const { computeComboMultiplier, computeReward } = require('../game-logic.js');
+import { test } from 'vitest';
+import assert from 'node:assert';
+import { computeComboMultiplier, computeReward } from '../src/js/game-logic.js';
 
 test('combo multiplier is 1 at combo count 1', () => {
     assert.strictEqual(computeComboMultiplier(1), 1);

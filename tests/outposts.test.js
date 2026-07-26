@@ -1,6 +1,6 @@
-const test = require('node:test');
-const assert = require('node:assert');
-const { canBuyOutpost, getOutpostKitCost, canPlaceOutpost, MAX_OUTPOSTS, TILES, OUTPOST_KIT_COSTS } = require('../game-logic.js');
+import { test } from 'vitest';
+import assert from 'node:assert';
+import { canBuyOutpost, getOutpostKitCost, canPlaceOutpost, MAX_OUTPOSTS, TILES, OUTPOST_KIT_COSTS } from '../src/js/game-logic.js';
 
 test('can buy first and second outpost kit, but not a third', () => {
     assert.strictEqual(canBuyOutpost(0), true);

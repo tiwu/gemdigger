@@ -1,9 +1,9 @@
-const test = require('node:test');
-const assert = require('node:assert');
-const {
+import { test } from 'vitest';
+import assert from 'node:assert';
+import {
     getUpgradeValue, getHullDamageReduction, MAX_FUEL, MAX_HULL, FUEL_PER_MOVE,
     getDepthHazardMultiplier, getStoneToughness, getBiome
-} = require('../game-logic.js');
+} from '../src/js/game-logic.js';
 
 test('drillPower crosses stone-toughness thresholds as it levels up', () => {
     assert.strictEqual(getUpgradeValue('drillPower', 0), 3);

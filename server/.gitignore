@@ -1,0 +1,4 @@
+node_modules/
+leaderboard.db
+leaderboard.db-wal
+leaderboard.db-shm

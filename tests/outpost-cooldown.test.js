@@ -1,6 +1,6 @@
-const test = require('node:test');
-const assert = require('node:assert');
-const GameLogic = require('../game-logic.js');
+import { test } from 'vitest';
+import assert from 'node:assert';
+import * as GameLogic from '../src/js/game-logic.js';
 
 test('canUseOutpost returns true when never used', () => {
     assert.strictEqual(GameLogic.canUseOutpost(null, 10000), true);

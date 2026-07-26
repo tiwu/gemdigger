@@ -1,6 +1,6 @@
-const test = require('node:test');
-const assert = require('node:assert');
-const { getBiome, BIOMES } = require('../game-logic.js');
+import { test } from 'vitest';
+import assert from 'node:assert';
+import { getBiome, BIOMES } from '../src/js/game-logic.js';
 
 test('getBiome returns Surface at depth 0', () => {
     assert.strictEqual(getBiome(0).name, 'Surface');

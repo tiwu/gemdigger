@@ -1,0 +1,25 @@
+/* ── Retro Arcade Boot Screen ─────────────────────────────────────────────── */
+#boot-screen {
+    position: absolute; top:0; left:0; right:0; bottom:0; background:#000;
+    display:flex; flex-direction:column; align-items:center; justify-content:center;
+    z-index: 50; overflow:hidden; font-family: 'Courier New', monospace;
+}
+#boot-screen::before {
+    content:''; position:absolute; top:0; left:0; right:0; bottom:0; pointer-events:none;
+    background: repeating-linear-gradient(0deg, rgba(0,0,0,0.25) 0px, rgba(0,0,0,0.25) 1px, transparent 1px, transparent 3px);
+    animation: scanlineFlicker 6s infinite;
+}
+@keyframes scanlineFlicker { 0%,100% { opacity:0.9; } 50% { opacity:0.7; } 51% { opacity:0.95; } }
+#boot-logo {
+    font-size: 54px; font-weight: bold; letter-spacing: 4px; color: #ffcc00;
+    text-shadow: 0 0 6px #ffcc00, 0 0 16px #ff8800, 0 0 28px #ff4400, 3px 3px 0 #7a1a00;
+    animation: bootFlicker 2.4s infinite;
+    margin-bottom: 8px;
+}
+#boot-sub { color:#00e5ff; font-size:14px; letter-spacing:3px; text-shadow:0 0 8px #00e5ff; margin-bottom: 40px; }
+@keyframes bootFlicker { 0%,19%,21%,23%,80%,100% { opacity:1; } 20%,22%,79% { opacity:0.75; } }
+#boot-loadbar-container { width: 280px; height: 18px; border:2px solid #00e5ff; border-radius:3px; background:#001; box-shadow:0 0 10px #00e5ff; margin-bottom: 30px; }
+#boot-loadbar-fill { height:100%; width:0%; background: linear-gradient(90deg,#ff4400,#ffcc00,#00e5ff); transition: width 1.6s linear; }
+#boot-press-start { color:#fff; font-size:15px; letter-spacing:2px; animation: bootBlink 1s steps(1) infinite; }
+@keyframes bootBlink { 0%,49% { opacity:1; } 50%,100% { opacity:0; } }
+#boot-copyright { position:absolute; bottom:16px; font-size:10px; color:#4a6fa5; letter-spacing:2px; }

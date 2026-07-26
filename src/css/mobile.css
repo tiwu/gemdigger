@@ -1,0 +1,26 @@
+/* ── Mobile / Portrait Adjustments ───────────────────────────────────────── */
+@media (max-width: 640px) {
+    #ui { min-width: 130px; padding: 6px 8px; font-size: 11px; max-width: 42vw; }
+    #ui h1 { font-size: 14px; margin-bottom: 4px; }
+    #ui .stat { font-size: 10px; margin: 2px 0; }
+    #ui .highscore { font-size: 9px; }
+    #ui .combo { font-size: 10px; min-height: 12px; }
+    #inventory { font-size: 9px; margin-top: 4px; max-width: 130px; }
+    .bar-container { height: 7px; margin-top: 3px; }
+    #sound-toggle, #lb-toggle, #settings-toggle, #help-toggle, #achievements-toggle {
+        font-size: 12px; padding: 5px 7px; top: 6px;
+    }
+    #sound-toggle { right: 6px; }
+    #lb-toggle { right: 44px; }
+    #settings-toggle { right: 82px; }
+    #achievements-toggle { right: 120px; }
+    #help-toggle { right: 158px; }
+    #controls-hint { display: none; }
+    #deploy-outpost-btn { bottom: 130px; font-size: 11px; padding: 8px 10px; }
+    #boot-logo { font-size: 32px; letter-spacing: 2px; }
+    #boot-loadbar-container { width: 200px; }
+}
+@media (max-width: 640px) and (orientation: portrait) {
+    #ui { top: 4px; left: 4px; }
+    #dpad { bottom: 20px; transform: translateX(-50%) scale(0.85); }
+}
