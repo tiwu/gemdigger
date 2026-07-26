@@ -13,7 +13,7 @@ on:
   workflow_dispatch:
 
 permissions:
-  contents: read
+  contents: write
   pages: write
   id-token: write
 
@@ -77,15 +77,49 @@ jobs:
     needs: build
     runs-on: ubuntu-latest
     permissions:
-      pages: write
-      id-token: write
-    environment:
-      name: github-pages
-      url: ${{ steps.deployment.outputs.page_url }}
+      contents: write
     steps:
-      - name: Deploy Main to GitHub Pages
-        id: deployment
-        uses: actions/deploy-pages@v4
+      - uses: actions/checkout@v7
+      - name: Download build artifact
+        uses: actions/download-artifact@v8
+        with:
+          name: github-pages
+          path: dist-artifact
+      - name: Extract build artifact
+        run: |
+          mkdir dist
+          tar -xf dist-artifact/artifact.tar -C dist
+      - name: Checkout gh-pages branch
+        uses: actions/checkout@v7
+        with:
+          ref: gh-pages
+          path: gh-pages-repo
+      - name: Deploy Main to gh-pages root
+        run: |
+          # Configure Git
+          git config --global user.name "github-actions[bot]"
+          git config --global user.email "github-actions[bot]@users.noreply.github.com"
+          
+          cd gh-pages-repo
+          
+          # Delete root files
+          find . -maxdepth 1 -type f -not -name ".git" -not -name ".nojekyll" -delete
+          
+          # Delete main app assets dir if it exists
+          if [ -d "assets" ]; then rm -rf assets; fi
+          
+          # Copy new files from dist to gh-pages-repo root
+          cp -r ../dist/* .
+          touch .nojekyll
+          
+          # Commit and push
+          git add -A
+          if git diff-index --quiet HEAD --; then
+            echo "No changes to commit"
+          else
+            git commit -m "Deploy main to gh-pages root"
+            git push origin gh-pages
+          fi
 
   deploy-branch:
     if: github.event_name == 'pull_request' && github.head_ref != 'main' && !startsWith(github.head_ref, 'dependabot/')
@@ -104,14 +138,36 @@ jobs:
         run: |
           mkdir dist
           tar -xf dist-artifact/artifact.tar -C dist
-      - name: Add .nojekyll
-        run: touch dist/.nojekyll
-      - name: Deploy Branch to GitHub Pages
-        uses: JamesIves/github-pages-deploy-action@v4
+      - name: Checkout gh-pages branch
+        uses: actions/checkout@v7
         with:
-          folder: dist
-          target-folder: ${{ github.head_ref || github.ref_name }}
-          branch: gh-pages
+          ref: gh-pages
+          path: gh-pages-repo
+      - name: Deploy Branch to gh-pages subdirectory
+        run: |
+          # Configure Git
+          git config --global user.name "github-actions[bot]"
+          git config --global user.email "github-actions[bot]@users.noreply.github.com"
+          
+          BRANCH_NAME="${{ github.head_ref || github.ref_name }}"
+          TARGET_DIR="gh-pages-repo/$BRANCH_NAME"
+          
+          # Clear old branch directory if it exists, then recreate
+          rm -rf "$TARGET_DIR"
+          mkdir -p "$TARGET_DIR"
+          
+          # Copy new build files to branch directory
+          cp -r dist/* "$TARGET_DIR/"
+          touch gh-pages-repo/.nojekyll
+          
+          cd gh-pages-repo
+          git add -A
+          if git diff-index --quiet HEAD --; then
+            echo "No changes to commit"
+          else
+            git commit -m "Deploy branch $BRANCH_NAME to subdirectory"
+            git push origin gh-pages
+          fi
       - name: Add deployment URL to summary
         run: |
           BRANCH_NAME="${{ github.head_ref || github.ref_name }}"

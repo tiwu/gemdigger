@@ -92,15 +92,19 @@ anti-cheat) and is left out of scope for now.
 
 ## Deployment (GitHub Pages)
 
-`.github/workflows/deploy.yml` runs on every push to branches (and pull requests), except when changes are exclusively to markdown (`*.md`) files. Note that `dependabot/` branches are excluded from automatic preview deployments, though they still run the full test suite.
+`.github/workflows/deploy.yml` runs on every push to the `main` branch and pull requests, except when changes are exclusively to markdown (`*.md`) files. Note that `dependabot/` branches are excluded from automatic preview deployments, though they still run the full test suite.
 
-1. Installs deps and runs the frontend test suite (`npm test`) and the
-   backend test suite (`server && npm test`).
+The workflow performs the following steps:
+1. Installs dependencies and runs the frontend test suite (`npm test`) and the backend test suite (`server && npm test`).
 2. Builds the static site with Vite (`npm run build` → `dist/`).
-3. Publishes `dist/` to GitHub Pages via the official Pages deploy action.
+3. Publishes the site to the `gh-pages` branch using native standard `git` shell commands:
+   - **Production (main branch):** Deployed to the root (`/`) of the `gh-pages` branch.
+   - **Previews (pull requests):** Deployed to a branch-specific subdirectory (`/<branch_name>/`) of the `gh-pages` branch.
 
-Enable Pages for the repo under **Settings → Pages → Build and deployment →
-GitHub Actions** to activate this.
+To enable this:
+Configure GitHub Pages under **Settings → Pages → Build and deployment** with:
+- **Source:** Deploy from a branch
+- **Branch:** `gh-pages` / `(root)`
 
 ## Controls
 
