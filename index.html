@@ -3,7 +3,7 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>Digger - Gem Hunt</title>
+<title>⛏ Gem Digger | Arcade Mining Simulator</title>
 <link rel="stylesheet" href="/src/css/base.css">
 <link rel="stylesheet" href="/src/css/overlays.css">
 <link rel="stylesheet" href="/src/css/boot-screen.css">
@@ -17,7 +17,8 @@
     <div id="boot-sub">- ARCADE MINING SIMULATOR -</div>
     <div id="boot-loadbar-container"><div id="boot-loadbar-fill"></div></div>
     <div id="boot-press-start">PRESS START</div>
-    <div id="boot-copyright">© 1988-STYLE RETRO CO.</div>
+    <div id="boot-copyright">© 1983-TITAN WURKS CO.</div>
+    <div id="boot-version" style="position:absolute; bottom:10px; right:10px; font-size:10px; color:#555;">v0.0.0</div>
 </div>
 
 <div id="achievement-toast">
@@ -41,11 +42,11 @@
     <div class="stat" id="outpost-stat" style="color:#f39c12;">🚧 Outposts: 0 carried, 0 placed</div>
 </div>
 
-<button id="sound-toggle">🔊</button>
-<button id="lb-toggle">🏆</button>
-<button id="settings-toggle">⚙️</button>
-<button id="help-toggle" style="position:absolute; top:10px; right:160px; background: rgba(0,0,0,0.7); border: 1px solid #4a6fa5; color: white; font-size: 16px; padding: 8px 12px; border-radius: 8px; cursor: pointer; z-index: 10;">❓</button>
-<button id="achievements-toggle">🏅</button>
+<button id="sound-toggle" class="hud-btn">🔊</button>
+<button id="lb-toggle" class="hud-btn">🏆</button>
+<button id="settings-toggle" class="hud-btn">⚙️</button>
+<button id="help-toggle" class="hud-btn">❓</button>
+<button id="achievements-toggle" class="hud-btn">🏅</button>
 
 <button id="deploy-outpost-btn" style="position:absolute; bottom:100px; right:20px; background: rgba(243,156,18,0.85); border: 1px solid #b9770e; color: white; font-size: 13px; padding: 10px 14px; border-radius: 8px; cursor: pointer; z-index: 15; display:none;">🚧 Deploy (E)</button>
 
@@ -74,9 +75,14 @@
 <div id="controls-hint">Arrow Keys / D-Pad &nbsp;|&nbsp; ⛽ Fuel &nbsp;|&nbsp; 🏠 Base &nbsp;|&nbsp; 🌋 Lava &nbsp;|&nbsp; 💎 Combo gems fast!</div>
 
 <div id="dpad">
-    <div></div><button id="dpad-up">▲</button><div></div>
-    <button id="dpad-left">◀</button><div style="background:rgba(255,255,255,0.05);border-radius:8px;"></div><button id="dpad-right">▶</button>
-    <div></div><button id="dpad-down">▼</button><div></div>
+    <div class="dpad-row-1">
+        <button id="dpad-up">▲</button>
+    </div>
+    <div class="dpad-row-2">
+        <button id="dpad-left">◀</button>
+        <button id="dpad-down">▼</button>
+        <button id="dpad-right">▶</button>
+    </div>
 </div>
 
 <div id="shop-overlay">
@@ -108,6 +114,7 @@
             <input type="range" id="setting-music-vol" min="0" max="1" step="0.05">
         </div>
     </div>
+    <div style="text-align:center; font-size:10px; color:#555; margin:10px 0;">Version: <span id="settings-version">0.0.0</span></div>
     <button class="big-btn red" id="settings-close-btn">Close</button>
 </div>
 
@@ -128,7 +135,7 @@
             <li>Dig up <b>gems</b> (Gold, Ruby, Emerald, Diamond, Sapphire, Unobtainium) for score. Chain gem hits quickly for a <b>combo multiplier</b>.</li>
             <li>Each <b>biome</b> (Surface, Cavern, Ice Layer, Magma Layer, Deep Core) has distinct rock colors, gem chances, hazards and music.</li>
             <li>Return to the <b>🏠 Surface Base</b> to refuel and spend score on drill upgrades.</li>
-            <li>Buy a <b>🚧 Outpost Kit</b> at the shop, carry it deep, and deploy it (button or <b>E</b> key) on cleared ground to refuel without the long trip back to the surface. Max 2 outposts per run!</li>
+            <li>Buy an <b>🚧 Outpost Kit</b> at the shop, carry it deep, and deploy it (button or <b>E</b> key) on cleared ground to refuel without the long trip back to the surface. Max 2 outposts per run!</li>
         </ul>
         <div style="text-align:center;">
             <button class="big-btn" id="tutorial-close-btn">Let's Dig! ⛏</button>

@@ -1,8 +1,10 @@
 # GemDigger ⛏
 
-An arcade-style mining game: dig through dirt, stone, gems and hazards across
-five biomes, manage fuel/hull, buy drill upgrades, deploy outposts, unlock
-achievements, and climb the leaderboard.
+ An arcade-style mining game: dig through dirt, stone, gems and hazards across
+ five biomes, manage fuel/hull, buy drill upgrades, deploy outposts, unlock
+ achievements, and climb the leaderboard.
+
+**v2.1.0 (Current):** Bugfixes and UI stability. Refined D-Pad, Master Mute, improved procedural music, and full shop refills.
 
 ## Project structure
 

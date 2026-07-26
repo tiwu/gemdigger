@@ -32,22 +32,28 @@ canvas { background-color: #0a0a0a; box-shadow: 0 0 30px rgba(0,0,0,0.8); image-
     border-radius: 6px; font-size: 10px; color: #7f8c8d; z-index: 10; max-width: 260px; text-align:right;
 }
 #dpad {
-    position: absolute; bottom: 40px; left: 50%; transform: translateX(-50%); display: grid;
-    grid-template-columns: 50px 50px 50px; grid-template-rows: 50px 50px 50px; gap: 4px; z-index: 15; user-select: none;
+    position: absolute; bottom: 40px; left: 50%; transform: translateX(-50%);
+    display: flex; flex-direction: column; align-items: center; gap: 6px; z-index: 15; user-select: none;
 }
-#dpad button { background: rgba(255,255,255,0.15); border: 1px solid rgba(255,255,255,0.3); border-radius: 8px; color: white; font-size: 20px; cursor: pointer; display:flex; align-items:center; justify-content:center; }
-#sound-toggle {
-    position: absolute; top: 10px; right: 10px; background: rgba(0,0,0,0.7); border: 1px solid #4a6fa5;
+.dpad-row-1 { display: flex; justify-content: center; width: 100%; }
+.dpad-row-2 { display: flex; gap: 6px; }
+#dpad button {
+    background: rgba(255,255,255,0.15); border: 1px solid rgba(255,255,255,0.3); border-radius: 8px;
+    color: white; font-size: 20px; cursor: pointer; display:flex; align-items:center; justify-content:center;
+    width: 50px; height: 50px;
+}
+.hud-btn {
+    position: absolute; top: 10px; background: rgba(0,0,0,0.7); border: 1px solid #4a6fa5;
     color: white; font-size: 18px; padding: 8px 12px; border-radius: 8px; cursor: pointer; z-index: 10;
+    width: 44px; height: 44px; display: flex; align-items: center; justify-content: center;
 }
-#lb-toggle {
-    position: absolute; top: 10px; right: 60px; background: rgba(0,0,0,0.7); border: 1px solid #4a6fa5;
-    color: white; font-size: 16px; padding: 8px 12px; border-radius: 8px; cursor: pointer; z-index: 10;
-}
-#settings-toggle {
-    position: absolute; top: 10px; right: 110px; background: rgba(0,0,0,0.7); border: 1px solid #4a6fa5;
-    color: white; font-size: 16px; padding: 8px 12px; border-radius: 8px; cursor: pointer; z-index: 10;
-}
+.hud-btn:hover { background: rgba(0,0,0,0.8); border-color: #f0c040; }
+
+#sound-toggle { right: 10px; }
+#lb-toggle { right: 60px; }
+#settings-toggle { right: 110px; }
+#help-toggle { right: 160px; }
+#achievements-toggle { right: 210px; }
 @keyframes pulseWarn { 0%,100% { filter:brightness(1); } 50% { filter:brightness(1.6); } }
 .bar-fill.pulse { animation: pulseWarn 0.6s infinite; }
 #screen-flash {

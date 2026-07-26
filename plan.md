@@ -1,53 +1,28 @@
-# GemDigger Restructuring Plan (completed)
+# Phase A: v2.1.0 Release Plan (Bugfixes)
 
-## Goals
-1. Improve testing (more unit + integration coverage of game mechanics)
-2. Break out inline `<style>`/`<script>` from index.html into dedicated files
-3. Organize styles/scripts into subfolders
-4. Move to Node/ES-module tooling (Vite) instead of vanilla single-file JS
-5. Add an optional backend server for an online leaderboard
-6. Add an integration testing framework covering real game-mechanics wiring
-7. Add a GitHub Actions workflow to build (Node) before deploying to GitHub Pages
+This release focuses on resolving issues from v2.0.0 to stabilize the game before new features are added in v3.0.0.
 
-## What was done
+## 1. UI & Styling
+- **Unified HUD Buttons**: Move all top-right buttons (`#sound-toggle`, `#help-toggle`, `#lb-toggle`, `#settings-toggle`, `#achievements-toggle`) to a shared `.hud-btn` class in `src/css/base.css` to ensure consistent sizing and alignment.
+- **D-Pad Relayout**: Update `index.html` and `src/css/mobile.css` to a more ergonomic 1-3 layout:
+  - Row 1: Up button (centered)
+  - Row 2: Left, Down, Right buttons
 
-- **Structure**: `index.html` is now markup-only. CSS split into
-  `src/css/{base,overlays,boot-screen,achievements,mobile}.css`. JS split into
-  `src/js/{game-logic,constants,state,worldgen,movement,shop,stats,settings,
-  audio,leaderboard,render,main}.js` as ES modules.
-- **Build tooling**: Added Vite (`vite.config.js`, `package.json` scripts
-  `dev`/`build`/`preview`/`test`). `game-logic.js` is a pure ES module
-  (no UMD wrapper needed anymore) importable both by the browser bundle and
-  by Node test files directly.
-- **Testing**: Migrated existing unit tests (`tests/*.test.js`) from
-  `node:test` + CommonJS `require` to `vitest` + ESM imports against
-  `src/js/game-logic.js`. Added `tests/integration/`:
-  - `movement-mining.test.js` — exercises `tryMove()` against the real
-    shared `state` object and a hand-built grid (fuel/hull consequences,
-    gem pickup/score/inventory, combo streak build-up and reset, bedrock
-    blocking, drill-power gating, lava hazard, fuel-depletion game over).
-  - `worldgen-full.test.js` — exercises `generateWorld()` end-to-end
-    (dimensions, bedrock border, cleared landing zone + base tile,
-    correct Unobtainium count, repeated-generation stability).
-  All 54 frontend tests pass via `npm test` (Vitest, jsdom environment).
-- **Backend**: `server/` — Express + `better-sqlite3` service with
-  `POST /api/scores` and `GET /api/scores/top`, a `Dockerfile`, and its own
-  integration test suite (`server/tests/scores.test.js`, 4 tests, spins the
-  app up in-process against a temp SQLite file). Frontend's existing
-  `src/js/leaderboard.js` already best-effort syncs to this API via
-  `window.GEMDIGGER_API_BASE` when configured, with a local `localStorage`
-  fallback so the game stays fully playable offline.
-- **CI/CD**: `.github/workflows/deploy.yml` — on push to `main`: install →
-  run frontend tests → run backend tests → `vite build` → upload `dist/` as
-  a Pages artifact → deploy to GitHub Pages.
-- **Docs**: `README.md` rewritten to document the new structure, test
-  strategy, backend usage, and deployment pipeline; briefly notes
-  multiplayer (WebSocket-based live play) as a possible larger future step
-  beyond the current leaderboard-only backend.
+## 2. Audio Improvements
+- **Master Mute**: The sound button will now toggle both SFX and Music.
+  - Update `src/js/settings.js` and `src/js/main.js` to sync both settings.
+  - Ensure unmuting restarts the appropriate biome music.
+- **Boot Screen Logic**: Remove the 3.5s auto-dismiss. Require a user gesture (press start) to enter the game, which also ensures the AudioContext is unlocked for the boot jingle and background music.
+- **Music Variety**: Enhance `src/js/audio.js` with procedural variations:
+  - Multiple lead phrases per biome.
+  - Light percussive "ticks" or arpeggio variations.
 
-## Deliberately out of scope (future work)
-- Real-time multiplayer (would need a stateful WebSocket server, tick sync,
-  and anti-cheat design — a substantially bigger effort than the leaderboard).
-- Auth/rate-limiting on the leaderboard API (currently trusts client-submitted
-  scores; fine for a casual arcade game, but would need hardening before any
-  serious anti-cheat concerns).
+## 3. Gameplay Fixes
+- **Shop Refill**: Change `closeShop()` in `src/js/shop.js` to fully refill fuel and hull. Since the shop is only accessible at the surface base (or outposts), a full refill is logical and fixes the issue where upgrades didn't immediately grant the new capacity.
+- **Version Display**: 
+  - Add `__APP_VERSION__` to Vite config using `package.json` version.
+  - Display version on the Boot Screen and Settings Overlay.
+
+## 4. Maintenance
+- **README Sync**: Update README with v2.1.0 details.
+- **Testing**: Add/update tests for shop refill and master mute logic.

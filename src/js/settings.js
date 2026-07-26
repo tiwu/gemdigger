@@ -27,7 +27,7 @@ export function applySettingsToUI() {
     if (sfxVolEl) sfxVolEl.value = settings.sfxVol;
     if (musicEl) musicEl.checked = settings.music;
     if (musicVolEl) musicVolEl.value = settings.musicVol;
-    if (soundToggleEl) soundToggleEl.textContent = settings.sfx ? '🔊' : '🔇';
+    if (soundToggleEl) soundToggleEl.textContent = (settings.sfx || settings.music) ? '🔊' : '🔇';
 }
 export function applyDpadVisibility() {
     const dpadEl = document.getElementById('dpad');
