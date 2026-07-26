@@ -18,6 +18,7 @@ When in plan mode, make sure to:
 - explain non-trivial code with comments
 - follow industry standards and best practises
 - when working from a plan, track progress in the plan file
+- always ensure code adheres to linting rules (JS, CSS, HTML, JSON) by running `npm run lint` before completing a task
 
 ## Testing
 - Unit tests are required for all scripting

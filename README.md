@@ -37,6 +37,7 @@ npm install
 npm run dev      # Vite dev server with hot reload
 npm run build    # Production build to dist/
 npm run preview  # Preview the production build locally
+npm run lint     # Lint JS, CSS, HTML, and JSON files
 ```
 
 ## Testing
