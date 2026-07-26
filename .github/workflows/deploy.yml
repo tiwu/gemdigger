@@ -107,3 +107,9 @@ jobs:
           folder: dist
           target-folder: ${{ github.head_ref || github.ref_name }}
           branch: gh-pages
+      - name: Add deployment URL to summary
+        run: |
+          BRANCH_NAME="${{ github.head_ref || github.ref_name }}"
+          URL="https://${{ github.repository_owner }}.github.io/${{ github.event.repository.name }}/$BRANCH_NAME/"
+          echo "### Deployment Successful! 🚀" >> $GITHUB_STEP_SUMMARY
+          echo "Your test version is available at: [$URL]($URL)" >> $GITHUB_STEP_SUMMARY
