@@ -91,7 +91,7 @@ anti-cheat) and is left out of scope for now.
 
 ## Deployment (GitHub Pages)
 
-`.github/workflows/deploy.yml` runs on every push to `main`:
+`.github/workflows/deploy.yml` runs on every push to branches (and pull requests), except when changes are exclusively to markdown (`*.md`) files:
 
 1. Installs deps and runs the frontend test suite (`npm test`) and the
    backend test suite (`server && npm test`).

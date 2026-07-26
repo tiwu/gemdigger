@@ -4,6 +4,7 @@ Long-term improvements and major new mechanics.
 
 ## 1. Input & Controls
 - **WASD Support**: Map W/A/S/D keys to navigation in `src/js/main.js`.
+- **H or ? for Help**: Map H and ? keys to show the help screen
 
 ## 2. World & Difficulty (The "Drill Wear" Update)
 - **Per-Tile Fuel Costs**: 
