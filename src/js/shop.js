@@ -21,8 +21,12 @@ export function openShop() {
 export function closeShop() {
     state.shopOpen = false; shopOverlayEl.classList.remove('visible');
     state.player.drillPower = getUpgradeValue('drillPower');
-    state.maxFuel = getUpgradeValue('fuelCapacity'); state.fuel = Math.min(state.fuel, state.maxFuel);
-    state.maxHull = getUpgradeValue('hullPlating'); state.hull = Math.min(state.hull, state.maxHull);
+    state.maxFuel = getUpgradeValue('fuelCapacity');
+    state.maxHull = getUpgradeValue('hullPlating');
+    
+    // Always full refill on leaving the shop (since shop is at base/outpost)
+    state.fuel = state.maxFuel;
+    state.hull = state.maxHull;
 }
 export function renderShop() {
     const shopScoreEl = document.getElementById('shop-score');

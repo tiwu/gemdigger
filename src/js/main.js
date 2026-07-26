@@ -231,12 +231,23 @@ function update() {
 
 function gameLoop() { update(); draw(); requestAnimationFrame(gameLoop); }
 
-// ── Sound toggle ─────────────────────────────────────────────────────────────
+// ── Sound toggle (Master Mute) ───────────────────────────────────────────────
 document.getElementById('sound-toggle').addEventListener('click', function() {
-    settings.sfx = !settings.sfx;
+    const isMuted = !settings.sfx && !settings.music;
+    if (isMuted) {
+        settings.sfx = true;
+        settings.music = true;
+    } else {
+        settings.sfx = false;
+        settings.music = false;
+    }
     state.soundEnabled = settings.sfx;
-    this.textContent = state.soundEnabled ? '🔊' : '🔇';
+    applySettingsToUI();
     saveSettings();
+    if (settings.music) {
+        resetCurrentMusicBiomeName();
+        updateMusicForBiome();
+    }
 });
 
 window.addEventListener('keydown', tryStartMusicOnGesture);
@@ -368,22 +379,48 @@ if (!localStorage.getItem(TUTORIAL_KEY)) openTutorial();
 // ── Retro Boot Screen ────────────────────────────────────────────────────────
 const bootScreenEl = document.getElementById('boot-screen');
 const bootLoadbarFill = document.getElementById('boot-loadbar-fill');
+const bootPressStart = document.getElementById('boot-press-start');
+let bootComplete = false;
+
 function dismissBootScreen() {
+    if (!bootComplete) return;
     bootScreenEl.style.display = 'none';
     window.removeEventListener('keydown', dismissBootScreen);
     window.removeEventListener('mousedown', dismissBootScreen);
     window.removeEventListener('touchstart', dismissBootScreen);
+    
+    // Unlock music if enabled
+    if (settings.music) {
+        tryStartMusicOnGesture();
+        updateMusicForBiome();
+    }
 }
-function bootScreenGestureStart() { playBootJingle(); }
-setTimeout(()=>{ bootLoadbarFill.style.width = '100%'; }, 50);
-setTimeout(playBootJingle, 60);
-setTimeout(dismissBootScreen, 3500);
-window.addEventListener('keydown', dismissBootScreen);
-window.addEventListener('mousedown', dismissBootScreen);
-window.addEventListener('touchstart', dismissBootScreen);
-window.addEventListener('keydown', bootScreenGestureStart);
-window.addEventListener('mousedown', bootScreenGestureStart);
-window.addEventListener('touchstart', bootScreenGestureStart);
+
+function handleBootGesture() {
+    if (!bootComplete) return;
+    playBootJingle();
+    dismissBootScreen();
+}
+
+// Initial boot sequence
+setTimeout(()=>{ 
+    bootLoadbarFill.style.width = '100%'; 
+    setTimeout(() => {
+        bootComplete = true;
+        if (bootPressStart) bootPressStart.style.display = 'block';
+    }, 1500);
+}, 50);
+
+window.addEventListener('keydown', handleBootGesture);
+window.addEventListener('mousedown', handleBootGesture);
+window.addEventListener('touchstart', handleBootGesture);
+
+// ── Versioning ───────────────────────────────────────────────────────────────
+const appVersion = typeof __APP_VERSION__ !== 'undefined' ? __APP_VERSION__ : '0.0.0';
+const bootVerEl = document.getElementById('boot-version');
+if (bootVerEl) bootVerEl.textContent = `v${appVersion}`;
+const setVerEl = document.getElementById('settings-version');
+if (setVerEl) setVerEl.textContent = appVersion;
 
 // ── Boot ─────────────────────────────────────────────────────────────────────
 loadStats();

@@ -7,14 +7,14 @@
     #ui .combo { font-size: 10px; min-height: 12px; }
     #inventory { font-size: 9px; margin-top: 4px; max-width: 130px; }
     .bar-container { height: 7px; margin-top: 3px; }
-    #sound-toggle, #lb-toggle, #settings-toggle, #help-toggle, #achievements-toggle {
-        font-size: 12px; padding: 5px 7px; top: 6px;
+    .hud-btn {
+        font-size: 14px; width: 34px; height: 34px; top: 6px;
     }
     #sound-toggle { right: 6px; }
     #lb-toggle { right: 44px; }
     #settings-toggle { right: 82px; }
-    #achievements-toggle { right: 120px; }
-    #help-toggle { right: 158px; }
+    #help-toggle { right: 120px; }
+    #achievements-toggle { right: 158px; }
     #controls-hint { display: none; }
     #deploy-outpost-btn { bottom: 130px; font-size: 11px; padding: 8px 10px; }
     #boot-logo { font-size: 32px; letter-spacing: 2px; }

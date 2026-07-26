@@ -65,27 +65,43 @@ export function tryStartMusicOnGesture() {
 // ── Biome-specific Chiptune Music (retro arcade vibe) ───────────────────────
 const BIOME_MUSIC = {
     'Surface':    {
-        lead:[523.25,659.25,783.99,659.25, 523.25,659.25,987.77,783.99],
+        leads:[
+            [523.25,659.25,783.99,659.25, 523.25,659.25,987.77,783.99],
+            [523.25,523.25,659.25,659.25, 783.99,783.99,659.25,659.25],
+            [783.99,659.25,523.25,392.00, 523.25,659.25,783.99,1046.50]
+        ],
         bass:[130.81,130.81,164.81,164.81],
         leadType:'square', bassType:'triangle', stepMs:180
     },
     'Cavern':     {
-        lead:[440.00,523.25,440.00,349.23, 440.00,523.25,659.25,523.25],
+        leads:[
+            [440.00,523.25,440.00,349.23, 440.00,523.25,659.25,523.25],
+            [440.00,392.00,349.23,329.63, 440.00,392.00,349.23,261.63]
+        ],
         bass:[110.00,110.00,146.83,130.81],
         leadType:'square', bassType:'triangle', stepMs:200
     },
     'Ice Layer':  {
-        lead:[698.46,880.00,1046.50,880.00, 698.46,880.00,1318.51,1046.50],
+        leads:[
+            [698.46,880.00,1046.50,880.00, 698.46,880.00,1318.51,1046.50],
+            [1046.50,1046.50,1318.51,1318.51, 880.00,880.00,698.46,698.46]
+        ],
         bass:[174.61,174.61,220.00,196.00],
         leadType:'square', bassType:'sine', stepMs:190
     },
     'Magma Layer':{
-        lead:[392.00,466.16,392.00,311.13, 392.00,466.16,523.25,466.16],
+        leads:[
+            [392.00,466.16,392.00,311.13, 392.00,466.16,523.25,466.16],
+            [311.13,349.23,392.00,466.16, 523.25,466.16,392.00,349.23]
+        ],
         bass:[98.00,98.00,116.54,87.31],
         leadType:'sawtooth', bassType:'square', stepMs:150
     },
     'Deep Core':  {
-        lead:[261.63,329.63,392.00,329.63, 246.94,329.63,392.00,293.66],
+        leads:[
+            [261.63,329.63,392.00,329.63, 246.94,329.63,392.00,293.66],
+            [261.63,196.00,130.81,196.00, 261.63,329.63,392.00,523.25]
+        ],
         bass:[65.41,65.41,98.00,73.42],
         leadType:'square', bassType:'sine', stepMs:220
     }
@@ -97,13 +113,28 @@ function playMusicStep(biomeConf, stepRef) {
     const ctxA2 = getAudioCtx();
     const stepDur = biomeConf.stepMs/1000;
 
+    const leadPhrase = biomeConf.leads[Math.floor(stepRef.step / 16) % biomeConf.leads.length];
     const leadOsc = ctxA2.createOscillator(); const leadGain = ctxA2.createGain();
-    leadOsc.type = biomeConf.leadType; leadOsc.frequency.value = biomeConf.lead[stepRef.step % biomeConf.lead.length];
+    leadOsc.type = biomeConf.leadType; leadOsc.frequency.value = leadPhrase[stepRef.step % leadPhrase.length];
+    
+    // Add subtle detune for "warmth"
+    leadOsc.detune.value = (Math.random()-0.5) * 4;
+
     leadGain.gain.setValueAtTime(0.0001, ctxA2.currentTime);
     leadGain.gain.linearRampToValueAtTime(0.09*settings.musicVol, ctxA2.currentTime+0.02);
     leadGain.gain.linearRampToValueAtTime(0.0001, ctxA2.currentTime + stepDur*0.85);
     leadOsc.connect(leadGain); leadGain.connect(ctxA2.destination);
     leadOsc.start(); leadOsc.stop(ctxA2.currentTime + stepDur);
+
+    // Subtle percussive tick every 4 steps
+    if (stepRef.step % 4 === 0) {
+        const tickOsc = ctxA2.createOscillator(); const tickGain = ctxA2.createGain();
+        tickOsc.type = 'sine'; tickOsc.frequency.value = 10;
+        tickGain.gain.setValueAtTime(0.01*settings.musicVol, ctxA2.currentTime);
+        tickGain.gain.exponentialRampToValueAtTime(0.0001, ctxA2.currentTime + 0.03);
+        tickOsc.connect(tickGain); tickGain.connect(ctxA2.destination);
+        tickOsc.start(); tickOsc.stop(ctxA2.currentTime + 0.03);
+    }
 
     if (stepRef.step % 2 === 0) {
         const bassOsc = ctxA2.createOscillator(); const bassGain = ctxA2.createGain();
