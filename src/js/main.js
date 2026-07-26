@@ -11,10 +11,6 @@ import {
     playBootJingle
 } from './audio.js';
 import { loadStats, saveStats, playerStats, checkAchievements, renderAchievements } from './stats.js';
-import {
-    getLeaderboard, saveLeaderboardEntry, updateLeaderboardEntryName,
-    renderLeaderboard, LB_NAME_KEY
-} from './leaderboard.js';
 import { initShopDom, openShop, closeShop, getUpgradeValue, getHullDamageReduction } from './shop.js';
 import { tryMove, setMovementHooks, deployOutpost } from './movement.js';
 import { initRenderDom, draw } from './render.js';
@@ -93,8 +89,11 @@ function triggerGameOver(reason) {
     if (toastEl) toastEl.classList.remove('show');
 
     const lbId = Date.now() + '-' + Math.floor(Math.random()*100000);
+    const LB_NAME_KEY = 'gemdigger_playername';
     const savedName = localStorage.getItem(LB_NAME_KEY) || '';
-    saveLeaderboardEntry({ id: lbId, name: savedName || 'Anonymous', score: state.score, depth: depthMeters, gems: totalGems, date: new Date().toISOString() });
+    import('./leaderboard.js').then(({ saveLeaderboardEntry }) => {
+        saveLeaderboardEntry({ id: lbId, name: savedName || 'Anonymous', score: state.score, depth: depthMeters, gems: totalGems, date: new Date().toISOString() });
+    });
     currentRunLbId = lbId;
     if (lbNameInput) lbNameInput.value = savedName;
     if (lbSaveConfirm) lbSaveConfirm.textContent = '';
@@ -259,24 +258,30 @@ window.addEventListener('touchstart', tryStartMusicOnGesture);
 
 // ── Leaderboard UI ───────────────────────────────────────────────────────────
 document.getElementById('lb-toggle').addEventListener('click', async ()=>{
-    const lb = await import('./leaderboard.js').then(m=>m.fetchRemoteLeaderboard());
+    const { fetchRemoteLeaderboard, renderLeaderboard } = await import('./leaderboard.js');
+    const lb = await fetchRemoteLeaderboard();
     renderLeaderboard(lb);
     lbOverlayEl.classList.add('visible');
 });
 document.getElementById('overlay-lb-btn').addEventListener('click', async ()=>{
-    const { fetchRemoteLeaderboard } = await import('./leaderboard.js');
+    const { fetchRemoteLeaderboard, renderLeaderboard } = await import('./leaderboard.js');
     const lb = await fetchRemoteLeaderboard();
     renderLeaderboard(lb);
     lbOverlayEl.classList.add('visible');
 });
 document.getElementById('lb-close-btn').addEventListener('click', ()=>{ lbOverlayEl.classList.remove('visible'); });
 
-if (lbNameInput) lbNameInput.value = localStorage.getItem(LB_NAME_KEY) || '';
+if (lbNameInput) {
+    const LB_NAME_KEY = 'gemdigger_playername';
+    lbNameInput.value = localStorage.getItem(LB_NAME_KEY) || '';
+}
 if (lbSaveBtn) {
-    lbSaveBtn.addEventListener('click', ()=>{
+    lbSaveBtn.addEventListener('click', async ()=>{
         const name = (lbNameInput.value || '').trim().slice(0,16) || 'Anonymous';
+        const LB_NAME_KEY = 'gemdigger_playername';
         localStorage.setItem(LB_NAME_KEY, name);
         if (currentRunLbId) {
+            const { updateLeaderboardEntryName } = await import('./leaderboard.js');
             updateLeaderboardEntryName(currentRunLbId, name);
             lbSaveConfirm.textContent = '✅ Saved!';
             setTimeout(()=>{ lbSaveConfirm.textContent = ''; }, 2000);
@@ -304,7 +309,14 @@ window.addEventListener('keydown', (e)=>{
 
     if (overlay.classList.contains('visible')) {
         if (key === 'enter' || key === ' ') { e.preventDefault(); init(); return; }
-        if (key === 'l') { e.preventDefault(); renderLeaderboard(getLeaderboard()); lbOverlayEl.classList.add('visible'); return; }
+        if (key === 'l') {
+            e.preventDefault();
+            import('./leaderboard.js').then(({ getLeaderboard, renderLeaderboard }) => {
+                renderLeaderboard(getLeaderboard());
+                lbOverlayEl.classList.add('visible');
+            });
+            return;
+        }
         if (key === 'h' || key === '?') { e.preventDefault(); openTutorial(); return; }
         if (key === 'c') { e.preventDefault(); openChangelog(); return; }
         return;
