@@ -4,7 +4,7 @@ import pkg from './package.json';
 // GemDigger is a static single-page game deployed to GitHub Pages, so we
 // build with relative asset base paths and emit into dist/.
 export default defineConfig({
-    base: './',
+    base: process.env.VITE_BASE_PATH || './',
     define: {
         __APP_VERSION__: JSON.stringify(pkg.version),
     },
