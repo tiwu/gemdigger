@@ -9,18 +9,18 @@ export const ACH_KEY = 'gemdigger_achievements';
 export let playerStats = { maxDepth:0, totalGems:0, unobtainiumFound:0, runsCompleted:0 };
 
 export function loadStats() {
-    try { Object.assign(playerStats, JSON.parse(localStorage.getItem(STATS_KEY)||'null')||{}); } catch(e) {}
+    try { Object.assign(playerStats, JSON.parse(localStorage.getItem(STATS_KEY)||'null')||{}); } catch { /* ignore parse error */ }
 }
 export function saveStats() { localStorage.setItem(STATS_KEY, JSON.stringify(playerStats)); }
 
 export function getUnlockedAchievements() {
-    try { return JSON.parse(localStorage.getItem(ACH_KEY)||'[]'); } catch(e) { return []; }
+    try { return JSON.parse(localStorage.getItem(ACH_KEY)||'[]'); } catch { return []; }
 }
 export function saveUnlockedAchievements(ids) { localStorage.setItem(ACH_KEY, JSON.stringify(ids)); }
 
 let toastQueue = [], toastShowing = false;
 
-export function checkAchievements(onToast) {
+export function checkAchievements(_onToast) {
     const unlocked = getUnlockedAchievements();
     const stats = {
         maxDepth: playerStats.maxDepth, totalGems: playerStats.totalGems,

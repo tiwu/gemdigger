@@ -1,7 +1,6 @@
 // ── GemDigger main entry point ───────────────────────────────────────────────
 // Bootstraps DOM references, wires up modules, and runs the game loop.
 import * as GameLogic from './game-logic.js';
-const { TILES } = GameLogic;
 import { TILE_SIZE, VIEW_TILES_X, VIEW_TILES_Y, GRID_WIDTH, GRID_HEIGHT, MOVE_DELAY } from './constants.js';
 import { state, resetState } from './state.js';
 import { generateWorld } from './worldgen.js';
@@ -16,7 +15,7 @@ import {
     getLeaderboard, saveLeaderboardEntry, updateLeaderboardEntryName,
     renderLeaderboard, LB_NAME_KEY
 } from './leaderboard.js';
-import { initShopDom, openShop, closeShop, renderShop, getUpgradeValue, getHullDamageReduction } from './shop.js';
+import { initShopDom, openShop, closeShop, getUpgradeValue, getHullDamageReduction } from './shop.js';
 import { tryMove, setMovementHooks, deployOutpost } from './movement.js';
 import { initRenderDom, draw } from './render.js';
 import { sfxShop } from './audio.js';
@@ -38,7 +37,6 @@ const restartBtn = document.getElementById('restart-btn');
 const shopOverlayEl = document.getElementById('shop-overlay');
 const lbOverlayEl = document.getElementById('leaderboard-overlay');
 const settingsOverlayEl = document.getElementById('settings-overlay');
-const dpadEl = document.getElementById('dpad');
 const screenFlashEl = document.getElementById('screen-flash');
 
 canvas.width = VIEW_TILES_X * TILE_SIZE;

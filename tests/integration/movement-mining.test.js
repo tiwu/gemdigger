@@ -8,7 +8,7 @@ import { test } from 'vitest';
 import assert from 'node:assert';
 import { TILES } from '../../src/js/game-logic.js';
 import { state, resetState } from '../../src/js/state.js';
-import { tryMove, setMovementHooks, resetCombo } from '../../src/js/movement.js';
+import { tryMove, setMovementHooks } from '../../src/js/movement.js';
 import { GRID_WIDTH, GRID_HEIGHT, TILE_SIZE, MAX_FUEL, MAX_HULL } from '../../src/js/constants.js';
 
 function buildEmptyGrid() {

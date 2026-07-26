@@ -32,10 +32,15 @@ jobs:
           cache: npm
       - name: Install frontend deps
         run: npm ci
+      - name: Run frontend lint
+        run: npm run lint
       - name: Run frontend unit + integration tests
         run: npm test
       - name: Install server deps
         run: npm ci
+        working-directory: server
+      - name: Run server lint
+        run: npm run lint
         working-directory: server
       - name: Run server tests
         run: npm test
