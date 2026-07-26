@@ -86,12 +86,14 @@ test('bedrock blocks movement entirely', () => {
     assert.strictEqual(state.player.gridX, 5, 'player should not move into bedrock');
 });
 
-test('drillPower below stone toughness prevents digging through stone', () => {
+test('drillPower below stone toughness costs hull integrity (Drill Wear) but allows movement', () => {
     setupState();
-    state.player.drillPower = 1; // too weak
+    state.player.drillPower = 1; // too weak for STONE (toughness 3)
     state.grid[5][6] = TILES.STONE;
+    const startHull = state.hull;
     tryMove(1, 0);
-    assert.strictEqual(state.player.gridX, 5, 'should not be able to dig tough stone with weak drill');
+    assert.strictEqual(state.player.gridX, 6, 'should now be able to dig tough stone even with weak drill');
+    assert.ok(state.hull < startHull, 'hull should decrease due to drill wear');
 });
 
 test('running out of fuel triggers game over via hook', () => {
