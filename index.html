@@ -1,0 +1,167 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>⛏ Gem Digger | Arcade Mining Simulator</title>
+  <script type="module" crossorigin src="/gemdigger/assets/index-orfdQ8FO.js"></script>
+  <link rel="stylesheet" crossorigin href="/gemdigger/assets/index-BjQT1H2d.css">
+</head>
+<body>
+
+<div id="boot-screen">
+    <div id="boot-logo">⛏ GEMDIGGER</div>
+    <div id="boot-sub">- ARCADE MINING SIMULATOR -</div>
+    <div id="boot-loadbar-container"><div id="boot-loadbar-fill"></div></div>
+    <div id="boot-press-start">PRESS START</div>
+    <div id="boot-copyright">© 1983-TITAN WURKS CO.</div>
+    <div id="boot-version" style="position:absolute; bottom:10px; right:10px; font-size:10px; color:#555;">v0.0.0</div>
+</div>
+
+<div id="achievement-toast">
+    <div class="toast-title">🏆 ACHIEVEMENT UNLOCKED</div>
+    <div class="toast-name" id="toast-name"></div>
+    <div class="toast-reward" id="toast-reward"></div>
+</div>
+
+<div id="ui">
+
+    <h1>⛏ Digger</h1>
+    <div class="stat">Score: <span id="score">0</span></div>
+    <div class="highscore">Best: <span id="ui-highscore">0</span></div>
+    <div class="stat">Depth: <span id="depth">0</span>m <span id="biome-name" style="color:#7f8c8d;font-size:11px;"></span></div>
+    <div class="combo" id="combo-display"></div>
+    <div class="stat">Fuel:</div>
+    <div class="bar-container"><div id="fuel-bar" class="bar-fill" style="width:100%"></div></div>
+    <div class="stat">Hull:</div>
+    <div class="bar-container"><div id="hull-bar" class="bar-fill" style="width:100%"></div></div>
+    <div id="inventory">Gems: None</div>
+    <div class="stat" id="outpost-stat" style="color:#f39c12;">🚧 Outposts: 0 carried, 0 placed</div>
+</div>
+
+<button id="sound-toggle" class="hud-btn">🔊</button>
+<button id="lb-toggle" class="hud-btn">🏆</button>
+<button id="settings-toggle" class="hud-btn">⚙️</button>
+<button id="help-toggle" class="hud-btn">❓</button>
+<button id="achievements-toggle" class="hud-btn">🏅</button>
+<button id="changelog-toggle" class="hud-btn" title="What's New">🆕</button>
+
+<button id="deploy-outpost-btn" style="position:absolute; bottom:100px; right:20px; background: rgba(243,156,18,0.85); border: 1px solid #b9770e; color: white; font-size: 13px; padding: 10px 14px; border-radius: 8px; cursor: pointer; z-index: 15; display:none;">🚧 Deploy (E)</button>
+
+
+<canvas id="gameCanvas"></canvas>
+<div id="screen-flash"></div>
+
+
+<div id="overlay">
+    <h2 id="overlay-title">⛽ Out of Fuel!</h2>
+    <div class="final-score">Final Score: <span id="final-score">0</span></div>
+    <div id="high-score-display" style="font-size:15px;color:#95a5a6;margin-bottom:8px;"></div>
+    <div class="gems-found" id="gems-found"></div>
+    <div style="display:flex; gap:8px; align-items:center; margin-bottom:10px;">
+        <input type="text" id="lb-name-input" maxlength="16" placeholder="Your name"
+            style="padding:8px 10px; border-radius:6px; border:1px solid #4a6fa5; background:#0d1620; color:#fff; font-size:14px; width:160px;">
+        <button class="big-btn" id="lb-save-btn" style="margin:0; padding:8px 16px; font-size:13px;">💾 Save Score</button>
+    </div>
+    <div id="lb-save-confirm" style="font-size:12px; color:#2ecc71; margin-bottom:6px; min-height:14px;"></div>
+    <div>
+        <button class="big-btn" id="restart-btn">⛏ Dig Again</button>
+        <button class="big-btn red" id="overlay-lb-btn">🏆 Leaderboard</button>
+    </div>
+</div>
+
+<div id="controls-hint">Arrow Keys / D-Pad &nbsp;|&nbsp; ⛽ Fuel &nbsp;|&nbsp; 🏠 Base &nbsp;|&nbsp; 🌋 Lava &nbsp;|&nbsp; 💎 Combo gems fast!</div>
+
+<div id="dpad">
+    <div class="dpad-row-1">
+        <button id="dpad-up">▲</button>
+    </div>
+    <div class="dpad-row-2">
+        <button id="dpad-left">◀</button>
+        <button id="dpad-down">▼</button>
+        <button id="dpad-right">▶</button>
+    </div>
+</div>
+
+<div id="shop-overlay">
+    <h2>🏠 Surface Base</h2>
+    <div class="shop-subtitle">Spend your score to upgrade your drill!</div>
+    <div id="shop-score-display">Score: <span id="shop-score">0</span></div>
+    <div class="shop-grid" id="shop-grid"></div>
+    <button class="big-btn red" id="shop-close-btn">⛏ Back to Digging</button>
+</div>
+
+<div id="leaderboard-overlay">
+    <h2>🏆 Leaderboard — Top Runs</h2>
+    <div id="leaderboard-list"></div>
+    <button class="big-btn red" id="lb-close-btn">Close</button>
+</div>
+
+<div id="settings-overlay">
+    <h2>⚙️ Settings</h2>
+    <div class="settings-grid" id="settings-grid">
+        <div class="settings-row">
+            <label><input type="checkbox" id="setting-dpad"> Show D-Pad</label>
+        </div>
+        <div class="settings-row">
+            <label><input type="checkbox" id="setting-sfx"> Sound Effects</label>
+            <input type="range" id="setting-sfx-vol" min="0" max="1" step="0.05">
+        </div>
+        <div class="settings-row">
+            <label><input type="checkbox" id="setting-music"> Music</label>
+            <input type="range" id="setting-music-vol" min="0" max="1" step="0.05">
+        </div>
+    </div>
+    <div style="text-align:center; font-size:10px; color:#555; margin:10px 0;">Version: <span id="settings-version">0.0.0</span></div>
+    <button class="big-btn red" id="settings-close-btn">Close</button>
+</div>
+
+<div id="achievements-overlay" style="display:none; position:absolute; top:0; left:0; right:0; bottom:0; background: rgba(0,0,0,0.85); flex-direction: column; align-items: center; justify-content: center; z-index: 22;">
+    <h2>🏅 Achievements</h2>
+    <div class="ach-subtitle">Unlock milestones for permanent bonus score!</div>
+    <div class="ach-list" id="ach-list"></div>
+    <button class="big-btn red" id="achievements-close-btn">Close</button>
+</div>
+
+<div id="tutorial-overlay" style="display:none; position:absolute; top:0; left:0; right:0; bottom:0; background: rgba(0,0,0,0.88); flex-direction: column; align-items: center; justify-content: center; z-index: 30;">
+
+    <div style="max-width:560px; width:90%; background:rgba(20,25,35,0.95); border:1px solid #4a6fa5; border-radius:12px; padding:24px 28px;">
+        <h2 style="margin:0 0 12px 0; color:#f0c040; text-shadow:0 0 10px #f0c040;">⛏ Welcome to GemDigger!</h2>
+        <ul style="font-size:14px; line-height:1.7; color:#dfe6e9; padding-left:20px; margin:0 0 18px 0;">
+            <li>Move with <b>WASD</b>, <b>Arrow Keys</b> or the <b>D-Pad</b> to dig.</li>
+            <li>💎 <b>Goal:</b> Dig deep to find gems and earn score!</li>
+            <li>🏠 <b>Surface Base:</b> Return to the house at the top (y=0) to sell gems, <b>Refuel</b>, <b>Repair</b>, and buy <b>Upgrades</b>!</li>
+            <li>⛽ <b>Fuel:</b> Fuel drains as you move. Don't run out!</li>
+            <li>🛡️ <b>Hull:</b> Lava and deep rocks damage your hull. Repair at base!</li>
+            <li>🚧 <b>Outposts:</b> Buy outpost kits to create refuel points deep underground.</li>
+        </ul>
+        <div style="text-align:center;">
+            <button class="big-btn" id="tutorial-close-btn">Let's Dig! ⛏</button>
+        </div>
+    </div>
+</div>
+
+<div id="changelog-overlay" style="display:none; position:absolute; top:0; left:0; right:0; bottom:0; background: rgba(0,0,0,0.88); flex-direction: column; align-items: center; justify-content: center; z-index: 31;">
+    <div style="max-width:500px; width:90%; background:rgba(20,25,35,0.95); border:1px solid #f1c40f; border-radius:12px; padding:24px 28px;">
+        <h2 style="margin:0 0 12px 0; color:#f0c040; text-shadow:0 0 10px #f0c040; text-align: center;">What's New in v3.0.0</h2>
+        <div style="max-height: 350px; overflow-y: auto; padding-right: 10px;">
+            <h3 style="color: #f1c40f; font-size: 18px; margin-bottom: 10px;">⚒️ The Drill Wear Update</h3>
+            <ul style="font-size: 14px; line-height: 1.6; color: #dfe6e9;">
+                <li><b>Soft Locks:</b> You can now drill rock harder than your drill power, but it will damage your <b>Hull</b>!</li>
+                <li><b>Reinforced Bits:</b> New shop upgrade to reduce damage from tough rocks.</li>
+                <li><b>Per-Tile Fuel:</b> Fuel consumption now depends on what you're drilling. Empty space is cheap!</li>
+                <li><b>WASD Support:</b> Use W/A/S/D or Arrow keys.</li>
+                <li><b>Emoji Graphics:</b> Gems now sparkle with vibrant emojis. 💎✨</li>
+                <li><b>Procedural Textures:</b> Dirt and stone have new unique textures.</li>
+                <li><b>Improved UI:</b> Toasts are bigger, and audio now pauses when you switch tabs.</li>
+            </ul>
+        </div>
+        <div style="text-align:center; margin-top: 20px;">
+            <button id="changelog-close-btn" class="big-btn">Awesome!</button>
+        </div>
+    </div>
+</div>
+
+
+</body>
+</html>
