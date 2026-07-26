@@ -37,8 +37,19 @@ export function tryMove(dx, dy) {
     if (targetTile === TILES.BEDROCK) return;
 
     const depthFracNow = Math.max(0, (player.gridY-2)/(GRID_HEIGHT-3));
-    let fuelCost = hooks.getUpgradeValue('fuelEfficiency') * GameLogic.getDepthFuelMultiplier(depthFracNow);
-    if (targetTile === TILES.STONE) fuelCost += FUEL_PER_STONE * GameLogic.getDepthFuelMultiplier(depthFracNow);
+    const { BALANCE } = GameLogic;
+    let fuelCostBase = BALANCE.FUEL_COSTS.EMPTY;
+    if (targetTile === TILES.DIRT) fuelCostBase = BALANCE.FUEL_COSTS.DIRT;
+    else if (targetTile === TILES.STONE) fuelCostBase = BALANCE.FUEL_COSTS.STONE;
+    else if (GameLogic.GEM_TILES.includes(targetTile)) fuelCostBase = BALANCE.FUEL_COSTS.GEMS;
+    else if (targetTile === TILES.FUEL) fuelCostBase = BALANCE.FUEL_COSTS.FUEL;
+    else if (targetTile === TILES.LAVA || targetTile === TILES.UNSTABLE) fuelCostBase = BALANCE.FUEL_COSTS.HAZARD;
+
+    // Apply Hard Rock fuel penalty if drill power is too low
+    const toughness = targetTile === TILES.STONE ? GameLogic.getStoneToughness(GameLogic.getBiome(depthFracNow)) : 1;
+    if (player.drillPower < toughness) fuelCostBase = BALANCE.FUEL_COSTS.HARD_ROCK;
+
+    let fuelCost = fuelCostBase * (hooks.getUpgradeValue('fuelEfficiency') / GameLogic.FUEL_PER_MOVE) * GameLogic.getDepthFuelMultiplier(depthFracNow);
     if (state.fuel <= 0) { hooks.triggerGameOver('fuel'); return; }
 
     if (dx>0) player.facing='right'; else if (dx<0) player.facing='left';
@@ -63,7 +74,15 @@ export function tryMove(dx, dy) {
         }
 
         const toughness = targetTile === TILES.STONE ? GameLogic.getStoneToughness(GameLogic.getBiome(depthFracNow)) : 1;
-        if (player.drillPower < toughness) return;
+        if (player.drillPower < toughness) {
+            // Drill Wear: Drilling rock harder than your drill costs Hull
+            const wearDamage = BALANCE.DRILL_WEAR_BASE_DAMAGE * (toughness - player.drillPower);
+            const bitsLevel = hooks.getUpgradeValue('reinforcedBits');
+            const reducedDamage = wearDamage * (1 - (bitsLevel * BALANCE.REINFORCED_BITS_REDUCTION));
+            state.hull = Math.max(0, state.hull - reducedDamage);
+            hooks.showFloatingText(`-Hull (Drill Wear)!`, newGridX, newGridY, '#e74c3c');
+            if (state.hull <= 0) { hooks.triggerGameOver('hull'); return; }
+        }
 
         if (isGem) {
             registerGemHit();

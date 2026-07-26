@@ -9,6 +9,11 @@ export function initRenderDom(canvasEl) {
     ctx = canvas.getContext('2d');
 }
 
+function pseudoRandom(x, y) {
+    const n = Math.sin(x * 12.9898 + y * 78.233) * 43758.5453;
+    return n - Math.floor(n);
+}
+
 export function draw() {
     const player = state.player, grid = state.grid;
     const depthFrac = Math.max(0,(player.gridY-2)/(GRID_HEIGHT-3));
@@ -41,6 +46,23 @@ export function draw() {
             else if (type === TILES.DIRT) { ctx.fillStyle = tileBiome.dirtColor; }
             else { ctx.fillStyle = TILE_COLORS[type] || '#111'; }
             ctx.fillRect(px,py,TILE_SIZE,TILE_SIZE);
+
+            // Procedural Textures
+            if (type === TILES.DIRT) {
+                ctx.fillStyle = 'rgba(0,0,0,0.1)';
+                for (let i=0; i<4; i++) {
+                    const rx = pseudoRandom(x, y + i) * TILE_SIZE;
+                    const ry = pseudoRandom(x + i, y) * TILE_SIZE;
+                    ctx.fillRect(px + rx, py + ry, 2, 2);
+                }
+            } else if (type === TILES.STONE) {
+                ctx.strokeStyle = 'rgba(255,255,255,0.1)';
+                ctx.beginPath();
+                ctx.moveTo(px + pseudoRandom(x, y)*10, py + pseudoRandom(y, x)*10);
+                ctx.lineTo(px + TILE_SIZE - pseudoRandom(x+1, y)*10, py + TILE_SIZE - pseudoRandom(y+1, x)*10);
+                ctx.stroke();
+            }
+
             if (type !== TILES.EMPTY) {
                 if (type === TILES.STONE) ctx.strokeStyle = tileBiome.stoneBorder;
                 else if (type === TILES.DIRT) ctx.strokeStyle = tileBiome.dirtBorder;
@@ -49,26 +71,21 @@ export function draw() {
                 ctx.strokeRect(px+0.5,py+0.5,TILE_SIZE-1,TILE_SIZE-1);
             }
 
-            if ([TILES.GOLD,TILES.DIAMOND,TILES.RUBY,TILES.EMERALD,TILES.SAPPHIRE].includes(type)) {
+            if ([TILES.GOLD,TILES.DIAMOND,TILES.RUBY,TILES.EMERALD,TILES.SAPPHIRE, TILES.UNOBTAINIUM].includes(type)) {
                 ctx.save();
-                ctx.globalAlpha = 0.3+0.15*Math.sin(Date.now()/300);
-                ctx.fillStyle = TILE_COLORS[type];
-                ctx.fillRect(px+4,py+4,TILE_SIZE-8,TILE_SIZE-8);
-                ctx.restore();
-            }
-
-            if (type === TILES.UNOBTAINIUM) {
-                ctx.save();
-                const hue = (Date.now()/10) % 360;
-                ctx.fillStyle = `hsl(${hue},100%,70%)`;
-                ctx.globalAlpha = 0.6+0.3*Math.sin(Date.now()/150);
-                ctx.beginPath();
-                ctx.arc(px+TILE_SIZE/2, py+TILE_SIZE/2, TILE_SIZE/2-2, 0, Math.PI*2);
-                ctx.fill();
-                ctx.fillStyle = '#fff';
-                ctx.font = `bold ${TILE_SIZE*0.5}px sans-serif`;
-                ctx.textAlign='center'; ctx.textBaseline='middle';
-                ctx.fillText('✨', px+TILE_SIZE/2, py+TILE_SIZE/2);
+                const emojis = {
+                    [TILES.GOLD]: '🪙',
+                    [TILES.DIAMOND]: '💎',
+                    [TILES.RUBY]: '💍',
+                    [TILES.EMERALD]: '💹',
+                    [TILES.SAPPHIRE]: '💠',
+                    [TILES.UNOBTAINIUM]: '🔮'
+                };
+                const scale = type === TILES.UNOBTAINIUM ? 0.7 : 0.55;
+                ctx.font = `${TILE_SIZE * scale}px sans-serif`;
+                ctx.textAlign = 'center'; ctx.textBaseline = 'middle';
+                ctx.globalAlpha = type === TILES.UNOBTAINIUM ? 0.8 + 0.2*Math.sin(Date.now()/150) : 1.0;
+                ctx.fillText(emojis[type], px+TILE_SIZE/2, py+TILE_SIZE/2);
                 ctx.restore();
             }
 

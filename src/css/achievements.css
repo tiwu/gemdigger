@@ -12,9 +12,10 @@
 .ach-row .ach-desc { font-size:11px; color:#95a5a6; }
 .ach-row .ach-reward { font-size:12px; color:#f0c040; }
 #achievement-toast {
-    position: absolute; top: 70px; left: 50%; transform: translateX(-50%) translateY(-20px);
-    background: rgba(20,25,35,0.95); border: 2px solid #f0c040; border-radius: 10px; padding: 12px 20px;
-    z-index: 40; opacity:0; transition: opacity 0.3s, transform 0.3s; text-align:center; pointer-events:none;
+    position: absolute; top: 80px; left: 50%; transform: translateX(-50%) translateY(-25px);
+    background: rgba(20, 25, 35, 0.98); border: 3px solid #f1c40f; box-shadow: 0 0 25px rgba(241, 196, 15, 0.4);
+    border-radius: 14px; padding: 16px 30px;
+    z-index: 40; opacity:0; transition: opacity 0.4s, transform 0.4s; text-align:center; pointer-events:none;
 }
 #achievement-toast.show { opacity:1; transform: translateX(-50%) translateY(0); }
 #achievement-toast .toast-title { color:#f0c040; font-weight:bold; font-size:13px; }

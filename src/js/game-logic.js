@@ -51,6 +51,20 @@ export function getBiome(depthFrac) {
 }
 
 // ── Upgrades ──────────────────────────────────────────────────────────────
+export const BALANCE = {
+    FUEL_COSTS: {
+        EMPTY: 0.2,
+        DIRT: 1.0,
+        STONE: 3.0,
+        HARD_ROCK: 5.0, // Used for stones in deep biomes if toughness > drillPower
+        GEMS: 1.5,
+        FUEL: 1.0,
+        HAZARD: 1.0
+    },
+    DRILL_WEAR_BASE_DAMAGE: 5, // Base hull damage when drilling rock > drillPower
+    REINFORCED_BITS_REDUCTION: 0.2, // 20% reduction per level
+};
+
 export const FUEL_PER_MOVE = 2;
 export const MAX_FUEL = 200;
 export const MAX_HULL = 100;
@@ -70,6 +84,7 @@ export function getUpgradeValue(id, level) {
         case 'fuelEfficiency': return FUEL_PER_MOVE * FUEL_EFFICIENCY_MULTIPLIERS[Math.min(level, FUEL_EFFICIENCY_MULTIPLIERS.length-1)];
         case 'fuelCapacity': return MAX_FUEL + level*50;
         case 'hullPlating': return MAX_HULL + level*40;
+        case 'reinforcedBits': return level; // Just return level, reduction handled in movement.js
         default: return 0;
     }
 }

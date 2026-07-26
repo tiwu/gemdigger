@@ -54,6 +54,7 @@ canvas { background-color: #0a0a0a; box-shadow: 0 0 30px rgba(0,0,0,0.8); image-
 #settings-toggle { right: 110px; }
 #help-toggle { right: 160px; }
 #achievements-toggle { right: 210px; }
+#changelog-toggle { right: 260px; }
 @keyframes pulseWarn { 0%,100% { filter:brightness(1); } 50% { filter:brightness(1.6); } }
 .bar-fill.pulse { animation: pulseWarn 0.6s infinite; }
 #screen-flash {

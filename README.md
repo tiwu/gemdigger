@@ -4,7 +4,7 @@
  five biomes, manage fuel/hull, buy drill upgrades, deploy outposts, unlock
  achievements, and climb the leaderboard.
 
-**v2.1.0 (Current):** Bugfixes and UI stability. Refined D-Pad, Master Mute, improved procedural music, and full shop refills.
+**v3.0.0 (Current):** "The Drill Wear Update". Soft-locked progression, per-tile fuel costs, reinforced bits, emoji gems, procedural textures, and WASD support.
 
 ## Project structure
 
@@ -103,7 +103,7 @@ GitHub Actions** to activate this.
 
 ## Controls
 
-- **Arrow keys / D-Pad**: move & dig
+- **WASD / Arrow keys / D-Pad**: move & dig
 - **E**: deploy a carried outpost kit on cleared ground
 - Return to the surface **🏠 Base** to refuel and buy upgrades
 - Watch **⛽ Fuel** and **🛡️ Hull** — depleting either ends the run
