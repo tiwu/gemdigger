@@ -98,6 +98,8 @@ jobs:
         run: |
           mkdir dist
           tar -xf dist-artifact/artifact.tar -C dist
+      - name: Add .nojekyll
+        run: touch dist/.nojekyll
       - name: Deploy Branch to GitHub Pages
         uses: JamesIves/github-pages-deploy-action@v4
         with:
