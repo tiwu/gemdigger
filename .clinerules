@@ -1,16 +1,25 @@
 # Project Guidelines
 
+## Planning
+
+When in plan mode, make sure to:
+- always include a first step to write the plan to a `plan.md` file
+- always include final steps to:
+  - Update or create `README.md` with the latest changes
+  - move the finished `plan.md` files to the `./adr` directory in the repo, timestamped with the current date and time in filename: `YYYYMMDD_HH24mmss_<plan filename>.md` . e.g.: `20260726_173405_plan.md`
+
 ## Documentation
-- Update relevant docs when modifying features
+- Update/create relevant docs when modifying features
 - Keep README.md in sync with new capabilities
-- When in plan mode, always include a first step to write the plan to a plan.md in the workspace.
 
 ## Coding
 - minimize external dependencies, they increase our security risk surface
 - prefer simple idioms over elaborate constructions
-- explain non-tivial code with comments
+- explain non-trivial code with comments
+- follow industry standards and best practises
+- when working from a plan, track progress in the plan file
 
 ## Testing
 - Unit tests are required for all scripting
 - Integration tests for game mechanics is desired
-- working code over test coverage
+- TDD where possible, but we prefer working code over test coverage

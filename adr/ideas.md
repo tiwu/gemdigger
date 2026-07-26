@@ -1,0 +1,2 @@
+- add hints for new players, so they learn the goal and mechanics of the game
+- increase size and visibility of toast that popup when you mine gems or when fuel gets low
