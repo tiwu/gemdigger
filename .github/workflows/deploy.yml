@@ -2,11 +2,12 @@ name: Build, Test & Deploy
 
 on:
   push:
-    branches: [main, '**']
+    branches: [main]
     paths-ignore:
       - '**/*.md'
   pull_request:
-    branches: [main]
+    branches: [main, '**']
+    types: [opened, synchronize, reopened]
     paths-ignore:
       - '**/*.md'
   workflow_dispatch:
@@ -54,8 +55,8 @@ jobs:
           if [ "${{ github.ref }}" = "refs/heads/main" ]; then
             echo "VITE_BASE_PATH=/${{ github.event.repository.name }}/" >> $GITHUB_ENV
           else
-            # Extract branch name and use it as base path
-            BRANCH_NAME=$(echo ${GITHUB_REF#refs/heads/})
+            # Use head_ref for PRs, or ref_name for others
+            BRANCH_NAME="${{ github.head_ref || github.ref_name }}"
             echo "VITE_BASE_PATH=/${{ github.event.repository.name }}/$BRANCH_NAME/" >> $GITHUB_ENV
           fi
       - run: npm ci
@@ -82,7 +83,7 @@ jobs:
         uses: actions/deploy-pages@v4
 
   deploy-branch:
-    if: github.ref != 'refs/heads/main'
+    if: github.event_name == 'pull_request' && github.head_ref != 'main'
     needs: build
     runs-on: ubuntu-latest
     permissions:
@@ -104,5 +105,5 @@ jobs:
         uses: JamesIves/github-pages-deploy-action@v4
         with:
           folder: dist
-          target-folder: ${{ github.ref_name }}
-          branch: github-pages
+          target-folder: ${{ github.head_ref || github.ref_name }}
+          branch: gh-pages
