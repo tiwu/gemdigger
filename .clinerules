@@ -19,6 +19,7 @@ When in plan mode, make sure to:
 - follow industry standards and best practises
 - when working from a plan, track progress in the plan file
 - always ensure code adheres to linting rules (JS, CSS, HTML, JSON) by running `npm run lint` before completing a task
+- maintain the application version in `package.json` as the single source of truth and display it dynamically on client screens (such as the Boot Screen or Settings Overlay) using dynamic configuration (e.g. Vite defines) rather than hardcoding version strings in the client source code
 
 ## Testing
 - Unit tests are required for all scripting

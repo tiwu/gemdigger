@@ -4,7 +4,7 @@
  five biomes, manage fuel/hull, buy drill upgrades, deploy outposts, unlock
  achievements, and climb the leaderboard.
 
-**v3.0.0 (Current):** "The Drill Wear Update". Soft-locked progression, per-tile fuel costs, reinforced bits, emoji gems, procedural textures, and WASD support.
+**v0.3.0 (Current):** "The Drill Wear Update". Soft-locked progression, per-tile fuel costs, reinforced bits, emoji gems, procedural textures, and WASD support.
 
 ## Project structure
 
