@@ -7,10 +7,15 @@
   "main": "server.js",
   "scripts": {
     "start": "node server.js",
-    "test": "node --test tests/*.test.js"
+    "test": "node --test tests/*.test.js",
+    "lint": "eslint ."
   },
   "dependencies": {
     "express": "^4.19.2",
     "better-sqlite3": "^11.3.0"
+  },
+  "devDependencies": {
+    "eslint": "^9.9.0",
+    "globals": "^15.9.0"
   }
 }

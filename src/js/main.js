@@ -1,7 +1,6 @@
 // ── GemDigger main entry point ───────────────────────────────────────────────
 // Bootstraps DOM references, wires up modules, and runs the game loop.
 import * as GameLogic from './game-logic.js';
-const { TILES } = GameLogic;
 import { TILE_SIZE, VIEW_TILES_X, VIEW_TILES_Y, GRID_WIDTH, GRID_HEIGHT, MOVE_DELAY } from './constants.js';
 import { state, resetState } from './state.js';
 import { generateWorld } from './worldgen.js';
@@ -12,11 +11,7 @@ import {
     playBootJingle
 } from './audio.js';
 import { loadStats, saveStats, playerStats, checkAchievements, renderAchievements } from './stats.js';
-import {
-    getLeaderboard, saveLeaderboardEntry, updateLeaderboardEntryName,
-    renderLeaderboard, LB_NAME_KEY
-} from './leaderboard.js';
-import { initShopDom, openShop, closeShop, renderShop, getUpgradeValue, getHullDamageReduction } from './shop.js';
+import { initShopDom, openShop, closeShop, getUpgradeValue, getHullDamageReduction } from './shop.js';
 import { tryMove, setMovementHooks, deployOutpost } from './movement.js';
 import { initRenderDom, draw } from './render.js';
 import { sfxShop } from './audio.js';
@@ -38,7 +33,6 @@ const restartBtn = document.getElementById('restart-btn');
 const shopOverlayEl = document.getElementById('shop-overlay');
 const lbOverlayEl = document.getElementById('leaderboard-overlay');
 const settingsOverlayEl = document.getElementById('settings-overlay');
-const dpadEl = document.getElementById('dpad');
 const screenFlashEl = document.getElementById('screen-flash');
 
 canvas.width = VIEW_TILES_X * TILE_SIZE;
@@ -89,9 +83,17 @@ function triggerGameOver(reason) {
 
     const totalGems = Object.values(state.inventory).reduce((a,b)=>a+b,0);
     const depthMeters = Math.max(0, state.player.gridY-2)*2;
+    
+    // Clear toast when game over to avoid clutter
+    const toastEl = document.getElementById('achievement-toast');
+    if (toastEl) toastEl.classList.remove('show');
+
     const lbId = Date.now() + '-' + Math.floor(Math.random()*100000);
+    const LB_NAME_KEY = 'gemdigger_playername';
     const savedName = localStorage.getItem(LB_NAME_KEY) || '';
-    saveLeaderboardEntry({ id: lbId, name: savedName || 'Anonymous', score: state.score, depth: depthMeters, gems: totalGems, date: new Date().toISOString() });
+    import('./leaderboard.js').then(({ saveLeaderboardEntry }) => {
+        saveLeaderboardEntry({ id: lbId, name: savedName || 'Anonymous', score: state.score, depth: depthMeters, gems: totalGems, date: new Date().toISOString() });
+    });
     currentRunLbId = lbId;
     if (lbNameInput) lbNameInput.value = savedName;
     if (lbSaveConfirm) lbSaveConfirm.textContent = '';
@@ -150,7 +152,7 @@ function updateUI() {
     if (state.comboCount > 1) comboDisplay.textContent = `🔥 Combo x${state.comboCount} (${state.comboMultiplier.toFixed(1)}x)`;
     else comboDisplay.textContent = '';
 
-    const fuelPct = (state.fuel/state.maxFuel)*100; fuelBar.style.width = fuelPct+'%';
+    const fuelPct = (state.fuel/state.maxFuel)*100; fuelBar.style.width = Math.max(0, fuelPct)+'%';
     fuelBar.style.background = fuelPct>50?'#2ecc71':fuelPct>25?'#f39c12':'#e74c3c';
     fuelBar.classList.toggle('pulse', fuelPct <= 20 && fuelPct > 0);
     const hullPct = (state.hull/state.maxHull)*100; hullBar.style.width = hullPct+'%';
@@ -184,10 +186,10 @@ function update() {
 
     if (state.moveTimer > 0) state.moveTimer--;
     else {
-        if (state.keys['ArrowUp']) { tryMove(0,-1); state.moveTimer=MOVE_DELAY; }
-        if (state.keys['ArrowDown']) { tryMove(0,1); state.moveTimer=MOVE_DELAY; }
-        if (state.keys['ArrowLeft']) { tryMove(-1,0); state.moveTimer=MOVE_DELAY; }
-        if (state.keys['ArrowRight']) { tryMove(1,0); state.moveTimer=MOVE_DELAY; }
+        if (state.keys["arrowup"] || state.keys["w"]) { tryMove(0,-1); state.moveTimer=MOVE_DELAY; }
+        if (state.keys["arrowdown"] || state.keys["s"]) { tryMove(0,1); state.moveTimer=MOVE_DELAY; }
+        if (state.keys["arrowleft"] || state.keys["a"]) { tryMove(-1,0); state.moveTimer=MOVE_DELAY; }
+        if (state.keys["arrowright"] || state.keys["d"]) { tryMove(1,0); state.moveTimer=MOVE_DELAY; }
     }
 
     const SPEED = getUpgradeValue('moveSpeed');
@@ -256,24 +258,30 @@ window.addEventListener('touchstart', tryStartMusicOnGesture);
 
 // ── Leaderboard UI ───────────────────────────────────────────────────────────
 document.getElementById('lb-toggle').addEventListener('click', async ()=>{
-    const lb = await import('./leaderboard.js').then(m=>m.fetchRemoteLeaderboard());
+    const { fetchRemoteLeaderboard, renderLeaderboard } = await import('./leaderboard.js');
+    const lb = await fetchRemoteLeaderboard();
     renderLeaderboard(lb);
     lbOverlayEl.classList.add('visible');
 });
 document.getElementById('overlay-lb-btn').addEventListener('click', async ()=>{
-    const { fetchRemoteLeaderboard } = await import('./leaderboard.js');
+    const { fetchRemoteLeaderboard, renderLeaderboard } = await import('./leaderboard.js');
     const lb = await fetchRemoteLeaderboard();
     renderLeaderboard(lb);
     lbOverlayEl.classList.add('visible');
 });
 document.getElementById('lb-close-btn').addEventListener('click', ()=>{ lbOverlayEl.classList.remove('visible'); });
 
-if (lbNameInput) lbNameInput.value = localStorage.getItem(LB_NAME_KEY) || '';
+if (lbNameInput) {
+    const LB_NAME_KEY = 'gemdigger_playername';
+    lbNameInput.value = localStorage.getItem(LB_NAME_KEY) || '';
+}
 if (lbSaveBtn) {
-    lbSaveBtn.addEventListener('click', ()=>{
+    lbSaveBtn.addEventListener('click', async ()=>{
         const name = (lbNameInput.value || '').trim().slice(0,16) || 'Anonymous';
+        const LB_NAME_KEY = 'gemdigger_playername';
         localStorage.setItem(LB_NAME_KEY, name);
         if (currentRunLbId) {
+            const { updateLeaderboardEntryName } = await import('./leaderboard.js');
             updateLeaderboardEntryName(currentRunLbId, name);
             lbSaveConfirm.textContent = '✅ Saved!';
             setTimeout(()=>{ lbSaveConfirm.textContent = ''; }, 2000);
@@ -297,64 +305,90 @@ document.getElementById('shop-close-btn').addEventListener('click', closeShop);
 // ── Input ────────────────────────────────────────────────────────────────────
 let shopHighlightIndex = 0;
 window.addEventListener('keydown', (e)=>{
+    const key = e.key.toLowerCase();
+
     if (overlay.classList.contains('visible')) {
-        if (e.key === 'Enter' || e.key === ' ') { e.preventDefault(); init(); return; }
-        if (e.key === 'Escape' || e.key.toLowerCase() === 'l') { e.preventDefault(); renderLeaderboard(getLeaderboard()); lbOverlayEl.classList.add('visible'); return; }
+        if (key === 'enter' || key === ' ') { e.preventDefault(); init(); return; }
+        if (key === 'l') {
+            e.preventDefault();
+            import('./leaderboard.js').then(({ getLeaderboard, renderLeaderboard }) => {
+                renderLeaderboard(getLeaderboard());
+                lbOverlayEl.classList.add('visible');
+            });
+            return;
+        }
+        if (key === 'h' || key === '?') { e.preventDefault(); openTutorial(); return; }
+        if (key === 'c') { e.preventDefault(); openChangelog(); return; }
         return;
     }
     if (lbOverlayEl.classList.contains('visible')) {
-        if (e.key === 'Enter' || e.key === 'Escape') { e.preventDefault(); lbOverlayEl.classList.remove('visible'); }
+        if (key === 'enter' || key === 'escape') { e.preventDefault(); lbOverlayEl.classList.remove('visible'); }
         return;
     }
     if (settingsOverlayEl.classList.contains('visible')) {
-        if (e.key === 'Escape' || e.key === 'Enter') { e.preventDefault(); closeSettings(); }
+        if (key === 'escape' || key === 'enter') { e.preventDefault(); closeSettings(); }
+        return;
+    }
+    if (changelogOverlayEl && changelogOverlayEl.classList.contains('visible')) {
+        if (key === 'escape' || key === 'enter') { e.preventDefault(); closeChangelog(); }
         return;
     }
     if (shopOverlayEl.classList.contains('visible')) {
         const items = document.querySelectorAll('#shop-grid .shop-item');
-        if (e.key === 'ArrowRight' || e.key === 'ArrowDown') {
+        if (key === 'arrowright' || key === 'arrowdown') {
             e.preventDefault();
             shopHighlightIndex = (shopHighlightIndex+1) % items.length;
             items.forEach((it,i)=>it.classList.toggle('highlighted', i===shopHighlightIndex));
-        } else if (e.key === 'ArrowLeft' || e.key === 'ArrowUp') {
+        } else if (key === 'arrowleft' || key === 'arrowup') {
             e.preventDefault();
             shopHighlightIndex = (shopHighlightIndex-1+items.length) % items.length;
             items.forEach((it,i)=>it.classList.toggle('highlighted', i===shopHighlightIndex));
-        } else if (e.key === 'Enter' || e.key === ' ') {
+        } else if (key === 'enter' || key === ' ') {
             e.preventDefault();
             const item = items[shopHighlightIndex];
             if (item) item.click();
-        } else if (e.key === 'Escape') {
+        } else if (key === 'escape') {
             e.preventDefault(); closeShop();
         }
         return;
     }
 
-    if (['ArrowUp','ArrowDown','ArrowLeft','ArrowRight'].includes(e.key)) {
+    if (['arrowup','arrowdown','arrowleft','arrowright', 'w', 'a', 's', 'd'].includes(key)) {
         e.preventDefault();
-        if (!state.keys[e.key]) { state.keys[e.key]=true; state.moveTimer=0; } else state.keys[e.key]=true;
+        if (!state.keys[key]) { state.keys[key]=true; state.moveTimer=0; } else state.keys[key]=true;
     }
-    if (e.key.toLowerCase() === 'e') { e.preventDefault(); deployOutpost(); }
+    if (key === 'e') { e.preventDefault(); deployOutpost(); }
 });
 
 window.addEventListener('keyup', (e)=>{
-    state.keys[e.key]=false;
-    const anyHeld = ['ArrowUp','ArrowDown','ArrowLeft','ArrowRight'].some(k=>state.keys[k]);
+    const key = e.key.toLowerCase();
+    state.keys[key]=false;
+    const anyHeld = ['arrowup','arrowdown','arrowleft','arrowright', 'w', 'a', 's', 'd'].some(k=>state.keys[k]);
     if (!anyHeld) state.moveTimer=0;
 });
 restartBtn.addEventListener('click', ()=>{ init(); });
 
-const dpadBtnMap = { 'dpad-up':[0,-1], 'dpad-down':[0,1], 'dpad-left':[-1,0], 'dpad-right':[1,0] };
+// ── Changelog Modal ──────────────────────────────────────────────────────────
+const changelogOverlayEl = document.getElementById('changelog-overlay');
+function openChangelog() { changelogOverlayEl.style.display = 'flex'; }
+function closeChangelog() { changelogOverlayEl.style.display = 'none'; }
+document.getElementById('changelog-toggle').addEventListener('click', openChangelog);
+document.getElementById('changelog-close-btn').addEventListener('click', closeChangelog);
+
+window.addEventListener("blur", ()=>{ if (settings.music) getAudioCtx().suspend(); });
+window.addEventListener("focus", ()=>{ if (settings.music) getAudioCtx().resume(); });
+
+const dpadBtnMap = { "dpad-up":[0,-1], "dpad-down":[0,1], "dpad-left":[-1,0], "dpad-right":[1,0] };
 let touchInterval = null;
 Object.entries(dpadBtnMap).forEach(([id,dir])=>{
     const btn = document.getElementById(id); if (!btn) return;
     const startMove = ()=>{ tryMove(...dir); touchInterval = setInterval(()=>tryMove(...dir), 150); };
     const stopMove = ()=>{ clearInterval(touchInterval); touchInterval=null; };
-    btn.addEventListener('touchstart', (e)=>{ e.preventDefault(); startMove(); }, {passive:false});
-    btn.addEventListener('touchend', stopMove);
-    btn.addEventListener('mousedown', startMove);
-    btn.addEventListener('mouseup', stopMove);
-    btn.addEventListener('mouseleave', stopMove);
+    btn.addEventListener("touchstart", (e)=>{ e.preventDefault(); startMove(); }, {passive:false});
+    btn.addEventListener("touchend", stopMove);
+    btn.addEventListener("mousedown", startMove);
+    btn.addEventListener("mouseup", stopMove);
+    btn.addEventListener("mouseleave", stopMove);
 });
 
 // ── Biome music update ───────────────────────────────────────────────────────
@@ -368,12 +402,12 @@ function updateMusicForBiome() {
 }
 
 // ── Tutorial Modal ───────────────────────────────────────────────────────────
-const TUTORIAL_KEY = 'gemdigger_tutorial_seen';
-const tutorialOverlayEl = document.getElementById('tutorial-overlay');
-function openTutorial() { tutorialOverlayEl.style.display = 'flex'; }
-function closeTutorial() { tutorialOverlayEl.style.display = 'none'; localStorage.setItem(TUTORIAL_KEY, '1'); }
-document.getElementById('tutorial-close-btn').addEventListener('click', closeTutorial);
-document.getElementById('help-toggle').addEventListener('click', openTutorial);
+const TUTORIAL_KEY = "gemdigger_tutorial_seen";
+const tutorialOverlayEl = document.getElementById("tutorial-overlay");
+function openTutorial() { tutorialOverlayEl.style.display = "flex"; }
+function closeTutorial() { tutorialOverlayEl.style.display = "none"; localStorage.setItem(TUTORIAL_KEY, "1"); }
+document.getElementById("tutorial-close-btn").addEventListener("click", closeTutorial);
+document.getElementById("help-toggle").addEventListener("click", openTutorial);
 if (!localStorage.getItem(TUTORIAL_KEY)) openTutorial();
 
 // ── Retro Boot Screen ────────────────────────────────────────────────────────

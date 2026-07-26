@@ -43,5 +43,6 @@ export const UPGRADES = [
     { id:'moveSpeed', name:'🚀 Move Speed', desc:'Drill moves faster', costs:[0,80,200,400], maxLevel:3 },
     { id:'fuelEfficiency', name:'⛽ Fuel Efficiency', desc:'Reduces fuel cost per move by 20% per level', costs:[0,150,300,500], maxLevel:3 },
     { id:'fuelCapacity', name:'🛢️ Fuel Tank', desc:'Increases max fuel capacity', costs:[0,150,350,700], maxLevel:3 },
-    { id:'hullPlating', name:'🛡️ Hull Plating', desc:'Increases max hull & reduces hazard damage (hazards get tougher with depth)', costs:[0,150,350,700], maxLevel:3 }
+    { id:'hullPlating', name:'🛡️ Hull Plating', desc:'Increases max hull & reduces hazard damage (hazards get tougher with depth)', costs:[0,150,350,700], maxLevel:3 },
+    { id:'reinforcedBits', name:'💎 Reinforced Bits', desc:'Reduces hull damage taken from drilling rocks harder than your drill.', costs:[0,200,450,900], maxLevel:3 }
 ];

@@ -7,6 +7,7 @@
     #ui .combo { font-size: 10px; min-height: 12px; }
     #inventory { font-size: 9px; margin-top: 4px; max-width: 130px; }
     .bar-container { height: 7px; margin-top: 3px; }
+
     .hud-btn {
         font-size: 14px; width: 34px; height: 34px; top: 6px;
     }
@@ -20,6 +21,7 @@
     #boot-logo { font-size: 32px; letter-spacing: 2px; }
     #boot-loadbar-container { width: 200px; }
 }
+
 @media (max-width: 640px) and (orientation: portrait) {
     #ui { top: 4px; left: 4px; }
     #dpad { bottom: 20px; transform: translateX(-50%) scale(0.85); }

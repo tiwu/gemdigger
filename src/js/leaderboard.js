@@ -12,7 +12,7 @@ function getApiBase() {
 }
 
 export function getLeaderboard() {
-    try { return JSON.parse(localStorage.getItem(LB_KEY)||'[]'); } catch(e){ return []; }
+    try { return JSON.parse(localStorage.getItem(LB_KEY)||'[]'); } catch { return []; }
 }
 export function saveLeaderboardEntry(entry) {
     const lb = getLeaderboard();
@@ -46,7 +46,7 @@ export async function fetchRemoteLeaderboard() {
         const res = await fetch(`${apiBase}/api/scores/top`);
         if (!res.ok) throw new Error('bad response');
         return await res.json();
-    } catch(e) {
+    } catch {
         return getLeaderboard();
     }
 }

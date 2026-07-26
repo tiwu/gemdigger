@@ -72,5 +72,5 @@ test('name is sanitized/truncated and defaults to Anonymous', async () => {
 });
 
 test.after(() => {
-    try { fs.unlinkSync(tmpDb); fs.unlinkSync(tmpDb + '-wal'); fs.unlinkSync(tmpDb + '-shm'); } catch(e) {}
+    try { fs.unlinkSync(tmpDb); fs.unlinkSync(tmpDb + '-wal'); fs.unlinkSync(tmpDb + '-shm'); } catch { /* ignore cleanup error */ }
 });

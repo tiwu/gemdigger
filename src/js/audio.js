@@ -15,7 +15,7 @@ export function beep(freq, duration, type, gainVal) {
         gain.gain.exponentialRampToValueAtTime(0.001, ctxA.currentTime + duration);
         osc.connect(gain); gain.connect(ctxA.destination);
         osc.start(); osc.stop(ctxA.currentTime + duration);
-    } catch(e) {}
+    } catch { /* ignore audio error */ }
 }
 export function sfxDig() { beep(120,0.08,'square',0.06); }
 export function sfxGem(rarity) { beep(500 + rarity*150, 0.18, 'sine', 0.12); beep(700 + rarity*150, 0.12, 'sine', 0.08); }
@@ -35,7 +35,7 @@ export function startMusic() {
     if (musicStarted || !settings.music) return;
     musicStarted = true;
     try {
-        const ctxA = getAudioCtx();
+        getAudioCtx();
         const notes = [130.81, 164.81, 196.00, 164.81]; // simple bass loop (C3,E3,G3,E3)
         let step = 0;
         function playStep() {
@@ -52,7 +52,7 @@ export function startMusic() {
             setTimeout(playStep, 1000);
         }
         playStep();
-    } catch(e) {}
+    } catch { /* ignore audio error */ }
 }
 
 export function tryStartMusicOnGesture() {
@@ -156,7 +156,7 @@ export function startBiomeMusic(biomeName) {
     try {
         const biomeConf = BIOME_MUSIC[biomeName] || BIOME_MUSIC['Surface'];
         playMusicStep(biomeConf, { step:0, biomeName });
-    } catch(e) {}
+    } catch { /* ignore audio error */ }
 }
 export function getCurrentMusicBiomeName() { return currentMusicBiomeName; }
 export function resetCurrentMusicBiomeName() { currentMusicBiomeName = null; }
@@ -167,7 +167,7 @@ export function playBootJingle() {
     if (bootJinglePlayed || !settings.sfx) return;
     bootJinglePlayed = true;
     try {
-        const ctxA = getAudioCtx();
+        getAudioCtx();
         const seq = [
             { f:261.63, d:0.09, t:'square' }, { f:329.63, d:0.09, t:'square' },
             { f:392.00, d:0.09, t:'square' }, { f:523.25, d:0.09, t:'square' },
@@ -189,5 +189,5 @@ export function playBootJingle() {
             }, startAt*1000);
             t += note.d*0.85;
         }
-    } catch(e) {}
+    } catch { /* ignore audio error */ }
 }

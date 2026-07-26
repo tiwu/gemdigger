@@ -8,7 +8,7 @@ export function loadSettings() {
     try {
         const saved = JSON.parse(localStorage.getItem(SETTINGS_KEY) || 'null');
         if (saved) Object.assign(settings, saved);
-    } catch(e) {}
+    } catch { /* ignore parse error */ }
     state.soundEnabled = settings.sfx;
     applySettingsToUI();
     applyDpadVisibility();

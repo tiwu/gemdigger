@@ -4,7 +4,7 @@
  five biomes, manage fuel/hull, buy drill upgrades, deploy outposts, unlock
  achievements, and climb the leaderboard.
 
-**v2.1.0 (Current):** Bugfixes and UI stability. Refined D-Pad, Master Mute, improved procedural music, and full shop refills.
+**v3.0.0 (Current):** "The Drill Wear Update". Soft-locked progression, per-tile fuel costs, reinforced bits, emoji gems, procedural textures, and WASD support.
 
 ## Project structure
 
@@ -37,6 +37,7 @@ npm install
 npm run dev      # Vite dev server with hot reload
 npm run build    # Production build to dist/
 npm run preview  # Preview the production build locally
+npm run lint     # Lint JS, CSS, HTML, and JSON files
 ```
 
 ## Testing
@@ -91,19 +92,23 @@ anti-cheat) and is left out of scope for now.
 
 ## Deployment (GitHub Pages)
 
-`.github/workflows/deploy.yml` runs on every push to branches (and pull requests), except when changes are exclusively to markdown (`*.md`) files:
+`.github/workflows/deploy.yml` runs on every push to the `main` branch and pull requests, except when changes are exclusively to markdown (`*.md`) files. Note that `dependabot/` branches are excluded from automatic preview deployments, though they still run the full test suite.
 
-1. Installs deps and runs the frontend test suite (`npm test`) and the
-   backend test suite (`server && npm test`).
+The workflow performs the following steps:
+1. Installs dependencies and runs the frontend test suite (`npm test`) and the backend test suite (`server && npm test`).
 2. Builds the static site with Vite (`npm run build` → `dist/`).
-3. Publishes `dist/` to GitHub Pages via the official Pages deploy action.
+3. Publishes the site to the `gh-pages` branch using native standard `git` shell commands:
+   - **Production (main branch):** Deployed to the root (`/`) of the `gh-pages` branch.
+   - **Previews (pull requests):** Deployed to a branch-specific subdirectory (`/<branch_name>/`) of the `gh-pages` branch.
 
-Enable Pages for the repo under **Settings → Pages → Build and deployment →
-GitHub Actions** to activate this.
+To enable this:
+Configure GitHub Pages under **Settings → Pages → Build and deployment** with:
+- **Source:** Deploy from a branch
+- **Branch:** `gh-pages` / `(root)`
 
 ## Controls
 
-- **Arrow keys / D-Pad**: move & dig
+- **WASD / Arrow keys / D-Pad**: move & dig
 - **E**: deploy a carried outpost kit on cleared ground
 - Return to the surface **🏠 Base** to refuel and buy upgrades
 - Watch **⛽ Fuel** and **🛡️ Hull** — depleting either ends the run
