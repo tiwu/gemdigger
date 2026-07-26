@@ -11,11 +11,11 @@
     "lint": "eslint ."
   },
   "dependencies": {
-    "express": "^4.19.2",
-    "better-sqlite3": "^11.3.0"
+    "better-sqlite3": "^11.3.0",
+    "express": "^4.19.2"
   },
   "devDependencies": {
-    "eslint": "^9.9.0",
+    "eslint": "^10.8.0",
     "globals": "^15.9.0"
   }
 }
