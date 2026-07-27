@@ -53,7 +53,7 @@ function processToastQueue() {
     document.getElementById('toast-reward').textContent = `+${ach.reward} pts — ${ach.desc}`;
     toastEl.classList.add('show');
     sfxLegendary();
-    setTimeout(()=>{ toastEl.classList.remove('show'); setTimeout(processToastQueue, 400); }, 3200);
+    setTimeout(()=>{ toastEl.classList.remove('show'); setTimeout(processToastQueue, 400); }, 5000);
 }
 
 export function renderAchievements() {

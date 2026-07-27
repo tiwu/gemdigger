@@ -13,6 +13,7 @@ import {
 import { loadStats, saveStats, playerStats, checkAchievements, renderAchievements } from './stats.js';
 import { initShopDom, openShop, closeShop, getUpgradeValue, getHullDamageReduction } from './shop.js';
 import { tryMove, setMovementHooks, deployOutpost } from './movement.js';
+import * as Tutorial from './tutorial.js';
 import { initRenderDom, draw } from './render.js';
 import { sfxShop } from './audio.js';
 
@@ -42,11 +43,17 @@ initShopDom();
 
 function getBiome(depthFrac) { return GameLogic.getBiome(depthFrac); }
 
-// ── Achievements UI wiring ───────────────────────────────────────────────────
-document.getElementById('achievements-toggle').addEventListener('click', ()=>{
-    renderAchievements();
-    document.getElementById('achievements-overlay').style.display = 'flex';
-});
+// ── Badges UI wiring ───────────────────────────────────────────────────
+function toggleAchievements() {
+    const el = document.getElementById('achievements-overlay');
+    if (el.style.display === 'flex') {
+        el.style.display = 'none';
+    } else {
+        renderAchievements();
+        el.style.display = 'flex';
+    }
+}
+document.getElementById('achievements-toggle').addEventListener('click', toggleAchievements);
 document.getElementById('achievements-close-btn').addEventListener('click', ()=>{
     document.getElementById('achievements-overlay').style.display = 'none';
 });
@@ -131,6 +138,16 @@ function init() {
     updateUI();
     overlay.classList.remove('visible');
     shopOverlayEl.classList.remove('visible');
+    Tutorial.triggerHint('start');
+}
+
+function quitToMenu() {
+    init();
+    overlay.classList.remove('visible');
+    bootScreenEl.style.display = 'flex';
+    window.addEventListener('keydown', dismissBootScreen);
+    window.addEventListener('mousedown', dismissBootScreen);
+    window.addEventListener('touchstart', dismissBootScreen);
 }
 
 // ── UI Update ────────────────────────────────────────────────────────────────
@@ -307,18 +324,81 @@ let shopHighlightIndex = 0;
 window.addEventListener('keydown', (e)=>{
     const key = e.key.toLowerCase();
 
-    if (overlay.classList.contains('visible')) {
-        if (key === 'enter' || key === ' ') { e.preventDefault(); init(); return; }
-        if (key === 'l') {
-            e.preventDefault();
-            import('./leaderboard.js').then(({ getLeaderboard, renderLeaderboard }) => {
-                renderLeaderboard(getLeaderboard());
+    // Prevent key triggers when boot screen is active
+    if (bootScreenEl && bootScreenEl.style.display !== 'none') return;
+
+    // Handle Tutorial/Help
+    if (key === 'h' || key === '?') {
+        e.preventDefault();
+        if (tutorialOverlayEl.style.display === 'flex') {
+            closeTutorial();
+        } else {
+            openTutorial();
+        }
+        return;
+    }
+
+    // Handle Config (Settings)
+    if (key === 'c') {
+        e.preventDefault();
+        if (settingsOverlayEl.classList.contains('visible')) {
+            closeSettings();
+        } else {
+            openSettings();
+        }
+        return;
+    }
+
+    // Handle Badges (Achievements)
+    if (key === 'b') {
+        e.preventDefault();
+        toggleAchievements();
+        return;
+    }
+
+    // Handle Leaderboard
+    if (key === 'l') {
+        e.preventDefault();
+        if (lbOverlayEl.classList.contains('visible')) {
+            lbOverlayEl.classList.remove('visible');
+        } else {
+            import('./leaderboard.js').then(({ fetchRemoteLeaderboard, renderLeaderboard }) => {
+                fetchRemoteLeaderboard().then(lb => renderLeaderboard(lb));
                 lbOverlayEl.classList.add('visible');
             });
-            return;
         }
-        if (key === 'h' || key === '?') { e.preventDefault(); openTutorial(); return; }
-        if (key === 'c') { e.preventDefault(); openChangelog(); return; }
+        return;
+    }
+
+    // Handle Mute toggle
+    if (key === 'm') {
+        e.preventDefault();
+        const isMuted = !settings.sfx && !settings.music;
+        if (isMuted) {
+            settings.sfx = true;
+            settings.music = true;
+        } else {
+            settings.sfx = false;
+            settings.music = false;
+        }
+        state.soundEnabled = settings.sfx;
+        applySettingsToUI();
+        saveSettings();
+        if (settings.music) {
+            resetCurrentMusicBiomeName();
+            updateMusicForBiome();
+        }
+        return;
+    }
+
+    // Handle Overlay dismissals with Escape/Enter
+    if (tutorialOverlayEl && tutorialOverlayEl.style.display === 'flex') {
+        if (key === 'escape' || key === 'enter') { e.preventDefault(); closeTutorial(); }
+        return;
+    }
+
+    if (overlay.classList.contains('visible')) {
+        if (key === 'enter' || key === ' ') { e.preventDefault(); init(); return; }
         return;
     }
     if (lbOverlayEl.classList.contains('visible')) {
@@ -329,8 +409,9 @@ window.addEventListener('keydown', (e)=>{
         if (key === 'escape' || key === 'enter') { e.preventDefault(); closeSettings(); }
         return;
     }
-    if (changelogOverlayEl && changelogOverlayEl.classList.contains('visible')) {
-        if (key === 'escape' || key === 'enter') { e.preventDefault(); closeChangelog(); }
+    const achOverlayEl = document.getElementById('achievements-overlay');
+    if (achOverlayEl && achOverlayEl.style.display === 'flex') {
+        if (key === 'escape' || key === 'enter') { e.preventDefault(); achOverlayEl.style.display = 'none'; }
         return;
     }
     if (shopOverlayEl.classList.contains('visible')) {
@@ -367,13 +448,7 @@ window.addEventListener('keyup', (e)=>{
     if (!anyHeld) state.moveTimer=0;
 });
 restartBtn.addEventListener('click', ()=>{ init(); });
-
-// ── Changelog Modal ──────────────────────────────────────────────────────────
-const changelogOverlayEl = document.getElementById('changelog-overlay');
-function openChangelog() { changelogOverlayEl.style.display = 'flex'; }
-function closeChangelog() { changelogOverlayEl.style.display = 'none'; }
-document.getElementById('changelog-toggle').addEventListener('click', openChangelog);
-document.getElementById('changelog-close-btn').addEventListener('click', closeChangelog);
+document.getElementById('quit-btn').addEventListener('click', quitToMenu);
 
 window.addEventListener("blur", ()=>{ if (settings.music) getAudioCtx().suspend(); });
 window.addEventListener("focus", ()=>{ if (settings.music) getAudioCtx().resume(); });
@@ -455,6 +530,10 @@ const bootVerEl = document.getElementById('boot-version');
 if (bootVerEl) bootVerEl.textContent = `v${appVersion}`;
 const setVerEl = document.getElementById('settings-version');
 if (setVerEl) setVerEl.textContent = appVersion;
+const helpVerEl = document.getElementById('help-version');
+if (helpVerEl) helpVerEl.textContent = appVersion;
+const mainVerEl = document.getElementById('main-version');
+if (mainVerEl) mainVerEl.textContent = `v${appVersion}`;
 
 // ── Boot ─────────────────────────────────────────────────────────────────────
 loadStats();

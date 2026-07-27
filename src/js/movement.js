@@ -9,6 +9,7 @@ import {
 import { state } from './state.js';
 import { playerStats, saveStats, checkAchievements } from './stats.js';
 import { sfxDig, sfxGem, sfxFuel, sfxLava, sfxCavein, sfxLegendary } from './audio.js';
+import * as Tutorial from './tutorial.js';
 
 // Callbacks injected by main.js to avoid circular imports with ui/render/shop modules.
 let hooks = {
@@ -57,8 +58,13 @@ export function tryMove(dx, dy) {
 
     const isGem = GameLogic.GEM_TILES.includes(targetTile);
 
+    if (state.fuel / state.maxFuel < 0.6) {
+        Tutorial.triggerHint('low_fuel');
+    }
+
     if (targetTile !== TILES.EMPTY) {
         if (targetTile === TILES.LAVA) {
+            Tutorial.triggerHint('hazard');
             const dmgReduction = hooks.getHullDamageReduction();
             const hazardMult = GameLogic.getDepthHazardMultiplier(depthFracNow);
             const lavaHullDmg = Math.round(LAVA_HULL_DAMAGE * hazardMult);
@@ -76,6 +82,7 @@ export function tryMove(dx, dy) {
         const toughness = targetTile === TILES.STONE ? GameLogic.getStoneToughness(GameLogic.getBiome(depthFracNow)) : 1;
         if (player.drillPower < toughness) {
             // Drill Wear: Drilling rock harder than your drill costs Hull
+            Tutorial.triggerHint('hard_rock');
             const wearDamage = BALANCE.DRILL_WEAR_BASE_DAMAGE * (toughness - player.drillPower);
             const bitsLevel = hooks.getUpgradeValue('reinforcedBits');
             const reducedDamage = wearDamage * (1 - (bitsLevel * BALANCE.REINFORCED_BITS_REDUCTION));
@@ -86,6 +93,7 @@ export function tryMove(dx, dy) {
 
         if (isGem) {
             registerGemHit();
+            Tutorial.triggerHint('gem_found');
             const gemName = GEM_NAMES[targetTile];
             const baseReward = GEM_REWARDS[targetTile];
             const reward = GameLogic.computeReward(baseReward, state.comboMultiplier);
@@ -123,6 +131,10 @@ export function tryMove(dx, dy) {
             state.fuel = Math.max(0, state.fuel - fuelCost);
             state.fuel = state.maxFuel; state.hull = state.maxHull;
             hooks.showFloatingText('Refuelled!', newGridX, newGridY, '#2ecc71');
+
+            if (Object.keys(state.inventory).length > 0) {
+                Tutorial.triggerHint('at_base');
+            }
             player.moving = true;
             player.targetX = newGridX*TILE_SIZE; player.targetY = newGridY*TILE_SIZE;
             player.gridX = newGridX; player.gridY = newGridY;

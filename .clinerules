@@ -11,6 +11,7 @@ When in plan mode, make sure to:
 ## Documentation
 - Update/create relevant docs when modifying features
 - Keep README.md in sync with new capabilities
+- Keep the in-game changelog (Help overlay) up to date with the latest version's features and changes
 
 ## Coding
 - minimize external dependencies, they increase our security risk surface
