@@ -109,7 +109,13 @@ Configure GitHub Pages under **Settings → Pages → Build and deployment** wit
 ## Controls
 
 - **WASD / Arrow keys / D-Pad**: move & dig
+- **H** or **?**: toggle Help / Tutorial
+- **C**: toggle Changelog
+- **L**: toggle Leaderboard
+- **M**: toggle Mute Sound
 - **E**: deploy a carried outpost kit on cleared ground
+- **Enter / Space**: start game (on game-over screen)
+- **Escape / Enter**: close open menus
 - Return to the surface **🏠 Base** to refuel and buy upgrades
 - Watch **⛽ Fuel** and **🛡️ Hull** — depleting either ends the run
 

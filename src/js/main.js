@@ -318,18 +318,78 @@ let shopHighlightIndex = 0;
 window.addEventListener('keydown', (e)=>{
     const key = e.key.toLowerCase();
 
-    if (overlay.classList.contains('visible')) {
-        if (key === 'enter' || key === ' ') { e.preventDefault(); init(); return; }
-        if (key === 'l') {
-            e.preventDefault();
-            import('./leaderboard.js').then(({ getLeaderboard, renderLeaderboard }) => {
-                renderLeaderboard(getLeaderboard());
+    // Prevent key triggers when boot screen is active
+    if (bootScreenEl && bootScreenEl.style.display !== 'none') return;
+
+    // Handle Tutorial/Help
+    if (key === 'h' || key === '?') {
+        e.preventDefault();
+        if (tutorialOverlayEl.style.display === 'flex') {
+            closeTutorial();
+        } else {
+            openTutorial();
+        }
+        return;
+    }
+
+    // Handle Changelog
+    if (key === 'c') {
+        e.preventDefault();
+        if (changelogOverlayEl && changelogOverlayEl.style.display === 'flex') {
+            closeChangelog();
+        } else {
+            openChangelog();
+        }
+        return;
+    }
+
+    // Handle Leaderboard
+    if (key === 'l') {
+        e.preventDefault();
+        if (lbOverlayEl.classList.contains('visible')) {
+            lbOverlayEl.classList.remove('visible');
+        } else {
+            import('./leaderboard.js').then(({ fetchRemoteLeaderboard, renderLeaderboard }) => {
+                fetchRemoteLeaderboard().then(lb => renderLeaderboard(lb));
                 lbOverlayEl.classList.add('visible');
             });
-            return;
         }
-        if (key === 'h' || key === '?') { e.preventDefault(); openTutorial(); return; }
-        if (key === 'c') { e.preventDefault(); openChangelog(); return; }
+        return;
+    }
+
+    // Handle Mute toggle
+    if (key === 'm') {
+        e.preventDefault();
+        const isMuted = !settings.sfx && !settings.music;
+        if (isMuted) {
+            settings.sfx = true;
+            settings.music = true;
+        } else {
+            settings.sfx = false;
+            settings.music = false;
+        }
+        state.soundEnabled = settings.sfx;
+        applySettingsToUI();
+        saveSettings();
+        if (settings.music) {
+            resetCurrentMusicBiomeName();
+            updateMusicForBiome();
+        }
+        return;
+    }
+
+    // Handle Overlay dismissals with Escape/Enter
+    if (tutorialOverlayEl && tutorialOverlayEl.style.display === 'flex') {
+        if (key === 'escape' || key === 'enter') { e.preventDefault(); closeTutorial(); }
+        return;
+    }
+    if (changelogOverlayEl && (changelogOverlayEl.style.display === 'flex' || changelogOverlayEl.classList.contains('visible'))) {
+        if (key === 'escape' || key === 'enter') { e.preventDefault(); closeChangelog(); }
+        return;
+    }
+
+    if (overlay.classList.contains('visible')) {
+        if (key === 'enter' || key === ' ') { e.preventDefault(); init(); return; }
         return;
     }
     if (lbOverlayEl.classList.contains('visible')) {

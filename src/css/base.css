@@ -53,6 +53,25 @@ canvas { background-color: #0a0a0a; box-shadow: 0 0 30px rgb(0,0,0,0.8); image-r
     color: white; font-size: 18px; padding: 8px 12px; border-radius: 8px; cursor: pointer; z-index: 10;
     width: 44px; height: 44px; display: flex; align-items: center; justify-content: center;
 }
+
+/* Hotkey hint badge */
+.hud-btn[data-hotkey]::after {
+    content: attr(data-hotkey);
+    position: absolute;
+    bottom: -4px;
+    right: -4px;
+    font-size: 8px;
+    font-weight: bold;
+    background: #111;
+    color: #f0c040;
+    padding: 1px 3px;
+    border-radius: 3px;
+    border: 1px solid #4a6fa5;
+    pointer-events: none;
+    line-height: 1;
+    font-family: monospace;
+    z-index: 11;
+}
 .hud-btn:hover { background: rgb(0,0,0,0.8); border-color: #f0c040; }
 
 #sound-toggle { right: 10px; }

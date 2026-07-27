@@ -17,7 +17,7 @@ const HINTS = {
 let seenHints = [];
 try {
     seenHints = JSON.parse(localStorage.getItem(HINTS_KEY) || '[]');
-} catch (_e) {
+} catch {
     seenHints = [];
 }
 
