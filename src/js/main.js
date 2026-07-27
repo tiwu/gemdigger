@@ -13,6 +13,7 @@ import {
 import { loadStats, saveStats, playerStats, checkAchievements, renderAchievements } from './stats.js';
 import { initShopDom, openShop, closeShop, getUpgradeValue, getHullDamageReduction } from './shop.js';
 import { tryMove, setMovementHooks, deployOutpost } from './movement.js';
+import * as Tutorial from './tutorial.js';
 import { initRenderDom, draw } from './render.js';
 import { sfxShop } from './audio.js';
 
@@ -131,6 +132,16 @@ function init() {
     updateUI();
     overlay.classList.remove('visible');
     shopOverlayEl.classList.remove('visible');
+    Tutorial.triggerHint('start');
+}
+
+function quitToMenu() {
+    init();
+    overlay.classList.remove('visible');
+    bootScreenEl.style.display = 'flex';
+    window.addEventListener('keydown', dismissBootScreen);
+    window.addEventListener('mousedown', dismissBootScreen);
+    window.addEventListener('touchstart', dismissBootScreen);
 }
 
 // ── UI Update ────────────────────────────────────────────────────────────────
@@ -367,6 +378,7 @@ window.addEventListener('keyup', (e)=>{
     if (!anyHeld) state.moveTimer=0;
 });
 restartBtn.addEventListener('click', ()=>{ init(); });
+document.getElementById('quit-btn').addEventListener('click', quitToMenu);
 
 // ── Changelog Modal ──────────────────────────────────────────────────────────
 const changelogOverlayEl = document.getElementById('changelog-overlay');

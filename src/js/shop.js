@@ -3,6 +3,7 @@ import * as GameLogic from './game-logic.js';
 import { UPGRADES } from './constants.js';
 import { state } from './state.js';
 import { sfxShop } from './audio.js';
+import * as Tutorial from './tutorial.js';
 
 let shopOverlayEl = null;
 export function initShopDom() {
@@ -17,6 +18,7 @@ export function getHullDamageReduction() { return GameLogic.getHullDamageReducti
 export function openShop() {
     if (state.gameOver) return;
     state.shopOpen = true; renderShop(); shopOverlayEl.classList.add('visible');
+    Tutorial.triggerHint('shop');
 }
 export function closeShop() {
     state.shopOpen = false; shopOverlayEl.classList.remove('visible');

@@ -1,6 +1,6 @@
 {
   "name": "gemdigger",
-  "version": "0.3.0",
+  "version": "0.3.1",
   "description": "A mining/digging game with gems, biomes, and outposts.",
   "private": true,
   "type": "module",
