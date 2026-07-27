@@ -4,7 +4,7 @@
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
 <title>⛏ Gem Digger | Arcade Mining Simulator</title>
-  <script type="module" crossorigin src="/gemdigger/feature/player-guidance/assets/index-e-UDvLPN.js"></script>
+  <script type="module" crossorigin src="/gemdigger/feature/player-guidance/assets/index-C0uHW6on.js"></script>
   <link rel="stylesheet" crossorigin href="/gemdigger/feature/player-guidance/assets/index-CDJd9BJ-.css">
 </head>
 <body>
@@ -25,6 +25,7 @@
 </div>
 
 <div id="ui">
+    <div id="main-version" style="position:absolute; bottom:10px; right:10px; font-size:10px; color:rgba(255,255,255,0.3); z-index: 10; pointer-events: none;">v0.0.0</div>
 
     <h1>⛏ Digger</h1>
     <div class="stat">Score: <span id="score">0</span></div>
@@ -39,12 +40,11 @@
     <div class="stat" id="outpost-stat" style="color:#f39c12;">🚧 Outposts: 0 carried, 0 placed</div>
 </div>
 
-    <button id="sound-toggle" class="hud-btn" data-hotkey="M">🔊</button>
-    <button id="lb-toggle" class="hud-btn" data-hotkey="L">🏆</button>
-    <button id="settings-toggle" class="hud-btn">⚙️</button>
-    <button id="help-toggle" class="hud-btn" data-hotkey="H">❓</button>
-    <button id="achievements-toggle" class="hud-btn">🏅</button>
-    <button id="changelog-toggle" class="hud-btn" title="What's New" data-hotkey="C">🆕</button>
+    <button id="sound-toggle" class="hud-btn" title="Mute (M)" data-hotkey="M">🔊</button>
+    <button id="lb-toggle" class="hud-btn" title="Leaderboard (L)" data-hotkey="L">🏆</button>
+    <button id="achievements-toggle" class="hud-btn" title="Badges (B)" data-hotkey="B">🏅</button>
+    <button id="settings-toggle" class="hud-btn" title="Config (C)" data-hotkey="C">⚙️</button>
+    <button id="help-toggle" class="hud-btn" title="Help (H)" data-hotkey="H">❓</button>
 
 <button id="deploy-outpost-btn" style="position:absolute; bottom:100px; right:20px; background: rgba(243,156,18,0.85); border: 1px solid #b9770e; color: white; font-size: 13px; padding: 10px 14px; border-radius: 8px; cursor: pointer; z-index: 15; display:none;">🚧 Deploy (E)</button>
 
@@ -104,7 +104,7 @@
 </div>
 
 <div id="settings-overlay">
-    <h2>⚙️ Settings</h2>
+    <h2>⚙️ Config</h2>
     <div class="settings-grid" id="settings-grid">
         <div class="settings-row">
             <label><input type="checkbox" id="setting-dpad"> Show D-Pad</label>
@@ -123,17 +123,16 @@
 </div>
 
 <div id="achievements-overlay" style="display:none; position:absolute; top:0; left:0; right:0; bottom:0; background: rgba(0,0,0,0.85); flex-direction: column; align-items: center; justify-content: center; z-index: 22;">
-    <h2>🏅 Achievements</h2>
+    <h2>🏅 Badges</h2>
     <div class="ach-subtitle">Unlock milestones for permanent bonus score!</div>
     <div class="ach-list" id="ach-list"></div>
     <button class="big-btn red" id="achievements-close-btn">Close</button>
 </div>
 
 <div id="tutorial-overlay" style="display:none; position:absolute; top:0; left:0; right:0; bottom:0; background: rgba(0,0,0,0.88); flex-direction: column; align-items: center; justify-content: center; z-index: 30;">
-
     <div style="max-width:560px; width:90%; background:rgba(20,25,35,0.95); border:1px solid #4a6fa5; border-radius:12px; padding:24px 28px;">
         <h2 style="margin:0 0 12px 0; color:#f0c040; text-shadow:0 0 10px #f0c040;">⛏ Welcome to GemDigger!</h2>
-        <ul style="font-size:14px; line-height:1.7; color:#dfe6e9; padding-left:20px; margin:0 0 18px 0;">
+        <ul style="font-size:14px; line-height:1.6; color:#dfe6e9; padding-left:20px; margin:0 0 18px 0;">
             <li>Move with <b>WASD</b>, <b>Arrow Keys</b> or the <b>D-Pad</b> to dig.</li>
             <li>💎 <b>Goal:</b> Dig deep to find gems and earn score!</li>
             <li>🏠 <b>Surface Base:</b> Return to the house at the top (y=0) to sell gems, <b>Refuel</b>, <b>Repair</b>, and buy <b>Upgrades</b>!</li>
@@ -141,29 +140,29 @@
             <li>🛡️ <b>Hull:</b> Lava and deep rocks damage your hull. Repair at base!</li>
             <li>🚧 <b>Outposts:</b> Buy outpost kits to create refuel points deep underground.</li>
         </ul>
-        <div style="text-align:center;">
-            <button class="big-btn" id="tutorial-close-btn">Let's Dig! ⛏</button>
-        </div>
-    </div>
-</div>
 
-<div id="changelog-overlay" style="display:none; position:absolute; top:0; left:0; right:0; bottom:0; background: rgba(0,0,0,0.88); flex-direction: column; align-items: center; justify-content: center; z-index: 31;">
-    <div style="max-width:500px; width:90%; background:rgba(20,25,35,0.95); border:1px solid #f1c40f; border-radius:12px; padding:24px 28px;">
-        <h2 style="margin:0 0 12px 0; color:#f0c040; text-shadow:0 0 10px #f0c040; text-align: center;">What's New in v3.0.0</h2>
-        <div style="max-height: 350px; overflow-y: auto; padding-right: 10px;">
-            <h3 style="color: #f1c40f; font-size: 18px; margin-bottom: 10px;">⚒️ The Drill Wear Update</h3>
-            <ul style="font-size: 14px; line-height: 1.6; color: #dfe6e9;">
-                <li><b>Soft Locks:</b> You can now drill rock harder than your drill power, but it will damage your <b>Hull</b>!</li>
-                <li><b>Reinforced Bits:</b> New shop upgrade to reduce damage from tough rocks.</li>
-                <li><b>Per-Tile Fuel:</b> Fuel consumption now depends on what you're drilling. Empty space is cheap!</li>
+        <h3 style="margin:10px 0 8px 0; color:#f1c40f; text-shadow:0 0 8px #f1c40f; font-size:16px; text-align:center;">What's New</h3>
+        <div style="max-height: 180px; overflow-y: auto; padding-right: 10px; margin-bottom: 15px; border-top: 1px solid rgba(241,196,15,0.2); padding-top: 10px;">
+            <h4 style="color: #f1c40f; font-size: 14px; margin: 0 0 5px 0;">v0.3.1 - UI Polish</h4>
+            <ul style="font-size: 13px; line-height: 1.5; color: #dfe6e9; margin-bottom: 10px;">
+                <li><b>Hotkeys:</b> HUD buttons now have logical hotkeys (L, B, C, H).</li>
+                <li><b>Unified Help:</b> Changelog merged into the Help screen.</li>
+                <li><b>Version Display:</b> Version number now visible on main HUD and overlays.</li>
+            </ul>
+            <h4 style="color: #f1c40f; font-size: 14px; margin: 0 0 5px 0;">v0.3.0 - The Drill Wear Update</h4>
+            <ul style="font-size: 13px; line-height: 1.5; color: #dfe6e9;">
+                <li><b>Soft Locks:</b> Drill rock harder than your drill power, but it damages <b>Hull</b>!</li>
+                <li><b>Reinforced Bits:</b> Shop upgrade to reduce damage.</li>
+                <li><b>Per-Tile Fuel:</b> Fuel consumption depends on what you're drilling.</li>
                 <li><b>WASD Support:</b> Use W/A/S/D or Arrow keys.</li>
-                <li><b>Emoji Graphics:</b> Gems now sparkle with vibrant emojis. 💎✨</li>
+                <li><b>Emoji Graphics:</b> Gems sparkle with vibrant emojis. 💎✨</li>
                 <li><b>Procedural Textures:</b> Dirt and stone have new unique textures.</li>
-                <li><b>Improved UI:</b> Toasts are bigger, and audio now pauses when you switch tabs.</li>
             </ul>
         </div>
-        <div style="text-align:center; margin-top: 20px;">
-            <button id="changelog-close-btn" class="big-btn">Awesome!</button>
+
+        <div style="text-align:center; font-size:10px; color:#555; margin-bottom:10px;">Version: <span id="help-version">0.0.0</span></div>
+        <div style="text-align:center;">
+            <button class="big-btn" id="tutorial-close-btn">Let's Dig! ⛏</button>
         </div>
     </div>
 </div>
