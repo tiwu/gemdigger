@@ -12,6 +12,17 @@ const MAX_NAME_LEN = 16;
 
 const db = openDb();
 const app = express();
+
+// Simple request logger
+app.use((req, res, next) => {
+    const start = Date.now();
+    res.on('finish', () => {
+        const duration = Date.now() - start;
+        console.log(`${new Date().toISOString()} ${req.method} ${req.originalUrl} ${res.statusCode} - ${duration}ms`);
+    });
+    next();
+});
+
 app.use(express.json());
 
 // Basic permissive CORS since this is a public read-mostly leaderboard API

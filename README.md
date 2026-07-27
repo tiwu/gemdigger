@@ -4,7 +4,9 @@
  five biomes, manage fuel/hull, buy drill upgrades, deploy outposts, unlock
  achievements, and climb the leaderboard.
 
-**v0.3.1 (Current):** "UI Polish & Unified Help". Added logical hotkeys for all HUD buttons, merged changelog into help screen, and improved version visibility.
+**v0.3.2 (Current):** "Server Insights". Added request logging to the online leaderboard backend to provide better visibility into API operations.
+
+**v0.3.1:** "UI Polish & Unified Help". Added logical hotkeys for all HUD buttons, merged changelog into help screen, and improved version visibility.
 
 ## Project structure
 
