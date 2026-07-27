@@ -43,11 +43,17 @@ initShopDom();
 
 function getBiome(depthFrac) { return GameLogic.getBiome(depthFrac); }
 
-// ── Achievements UI wiring ───────────────────────────────────────────────────
-document.getElementById('achievements-toggle').addEventListener('click', ()=>{
-    renderAchievements();
-    document.getElementById('achievements-overlay').style.display = 'flex';
-});
+// ── Badges UI wiring ───────────────────────────────────────────────────
+function toggleAchievements() {
+    const el = document.getElementById('achievements-overlay');
+    if (el.style.display === 'flex') {
+        el.style.display = 'none';
+    } else {
+        renderAchievements();
+        el.style.display = 'flex';
+    }
+}
+document.getElementById('achievements-toggle').addEventListener('click', toggleAchievements);
 document.getElementById('achievements-close-btn').addEventListener('click', ()=>{
     document.getElementById('achievements-overlay').style.display = 'none';
 });
@@ -332,14 +338,21 @@ window.addEventListener('keydown', (e)=>{
         return;
     }
 
-    // Handle Changelog
+    // Handle Config (Settings)
     if (key === 'c') {
         e.preventDefault();
-        if (changelogOverlayEl && changelogOverlayEl.style.display === 'flex') {
-            closeChangelog();
+        if (settingsOverlayEl.classList.contains('visible')) {
+            closeSettings();
         } else {
-            openChangelog();
+            openSettings();
         }
+        return;
+    }
+
+    // Handle Badges (Achievements)
+    if (key === 'b') {
+        e.preventDefault();
+        toggleAchievements();
         return;
     }
 
@@ -383,10 +396,6 @@ window.addEventListener('keydown', (e)=>{
         if (key === 'escape' || key === 'enter') { e.preventDefault(); closeTutorial(); }
         return;
     }
-    if (changelogOverlayEl && (changelogOverlayEl.style.display === 'flex' || changelogOverlayEl.classList.contains('visible'))) {
-        if (key === 'escape' || key === 'enter') { e.preventDefault(); closeChangelog(); }
-        return;
-    }
 
     if (overlay.classList.contains('visible')) {
         if (key === 'enter' || key === ' ') { e.preventDefault(); init(); return; }
@@ -400,8 +409,9 @@ window.addEventListener('keydown', (e)=>{
         if (key === 'escape' || key === 'enter') { e.preventDefault(); closeSettings(); }
         return;
     }
-    if (changelogOverlayEl && changelogOverlayEl.classList.contains('visible')) {
-        if (key === 'escape' || key === 'enter') { e.preventDefault(); closeChangelog(); }
+    const achOverlayEl = document.getElementById('achievements-overlay');
+    if (achOverlayEl && achOverlayEl.style.display === 'flex') {
+        if (key === 'escape' || key === 'enter') { e.preventDefault(); achOverlayEl.style.display = 'none'; }
         return;
     }
     if (shopOverlayEl.classList.contains('visible')) {
@@ -439,13 +449,6 @@ window.addEventListener('keyup', (e)=>{
 });
 restartBtn.addEventListener('click', ()=>{ init(); });
 document.getElementById('quit-btn').addEventListener('click', quitToMenu);
-
-// ── Changelog Modal ──────────────────────────────────────────────────────────
-const changelogOverlayEl = document.getElementById('changelog-overlay');
-function openChangelog() { changelogOverlayEl.style.display = 'flex'; }
-function closeChangelog() { changelogOverlayEl.style.display = 'none'; }
-document.getElementById('changelog-toggle').addEventListener('click', openChangelog);
-document.getElementById('changelog-close-btn').addEventListener('click', closeChangelog);
 
 window.addEventListener("blur", ()=>{ if (settings.music) getAudioCtx().suspend(); });
 window.addEventListener("focus", ()=>{ if (settings.music) getAudioCtx().resume(); });
@@ -527,6 +530,10 @@ const bootVerEl = document.getElementById('boot-version');
 if (bootVerEl) bootVerEl.textContent = `v${appVersion}`;
 const setVerEl = document.getElementById('settings-version');
 if (setVerEl) setVerEl.textContent = appVersion;
+const helpVerEl = document.getElementById('help-version');
+if (helpVerEl) helpVerEl.textContent = appVersion;
+const mainVerEl = document.getElementById('main-version');
+if (mainVerEl) mainVerEl.textContent = `v${appVersion}`;
 
 // ── Boot ─────────────────────────────────────────────────────────────────────
 loadStats();
