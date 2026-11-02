@@ -8,6 +8,9 @@
 
 **v0.3.1:** "UI Polish & Unified Help". Added logical hotkeys for all HUD buttons, merged changelog into help screen, and improved version visibility.
 
+<img width="497" height="174" alt="image" src="https://github.com/user-attachments/assets/abd91566-8a34-43a7-8cbe-12108a47b2f4" />
+
+
 ## Project structure
 
 ```
